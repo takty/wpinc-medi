@@ -10,121 +10,163 @@
 namespace wpinc\medi;
 
 /**
- * Enables SVG file uploading.
+ * Enables SVG file supports.
  */
-function enable_svg_uploading() {
-	add_filter(
-		'upload_mimes',
-		function ( array $mimes ) {
-			$mimes['svg']  = 'image/svg+xml';
-			$mimes['svgz'] = 'image/svg+xml';
-			return $mimes;
-		}
-	);
-	add_filter(
-		'wp_handle_upload_prefilter',
-		function ( $file ) {
-			if ( 'image/svg+xml' === $file['type'] ) {
-				if ( ! check_svg_secure( $file['tmp_name'] ) ) {
-					$file['error'] = __( 'Specified file was not be uploaded because it may contain security issues.' );
-				}
-			}
-			return $file;
-		}
-	);
-	add_filter(
-		'wp_check_filetype_and_ext',
-		function ( array $data, string $file, string $filename ) {
-			$ext = $data['ext'] ?? '';
-			if ( empty( $ext ) ) {
-				$ext = strtolower( end( explode( '.', $filename ) ) );
-			}
-			if ( in_array( $ext, array( 'svg', 'svgz' ), true ) ) {
-				$data['type'] = 'image/svg+xml';
-				$data['ext']  = $ext;
-			}
-			return $data;
-		},
-		10,
-		3
-	);
-	add_filter(
-		'wp_prepare_attachment_for_js',
-		function ( $res, $attachment ) {
-			if ( 'image/svg+xml' === $res['mime'] ) {
-				$ds = get_svg_size( get_attached_file( $attachment->ID ) );
-				if ( $ds ) {
-					$res = array_merge( $res, $ds );
-				}
-				$sizes = get_sizes( $ds );
-				foreach ( $sizes as $name => &$a ) {
-					$a['url']         = $res['url'];
-					$a['orientation'] = $a['height'] > $a['width'] ? 'portrait' : 'landscape';
-				}
-				$res['sizes'] = $sizes;
-				$res['icon']  = $res['url'];
-			}
-			return $res;
-		},
-		10,
-		2
-	);
-	add_filter(
-		'wp_generate_attachment_metadata',
-		function ( $metadata, $attachment_id ) {
-			if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
-				$file = get_attached_file( $attachment_id );
-
-				$ds = get_svg_size( $file );
-				if ( empty( $ds ) ) {
-					return array();
-				}
-
-				$rel_file = $file;
-				$uploads  = wp_get_upload_dir();
-				if ( 0 === strpos( $rel_file, $uploads['basedir'] ) ) {
-					$rel_file = str_replace( $uploads['basedir'], '', $rel_file );
-					$rel_file = ltrim( $rel_file, '/' );
-				}
-				// Default image meta.
-				$metadata = array(
-					'width'  => $ds['width'],
-					'height' => $ds['height'],
-					'file'   => $rel_file,
-					'sizes'  => array(),
-				);
-
-				$sizes = get_sizes( $ds );
-				foreach ( $sizes as $name => &$a ) {
-					$a['file']      = wp_basename( $file );
-					$a['mime-type'] = 'image/svg+xml';
-				}
-				$metadata['sizes']          = $sizes;
-				$metadata['original_image'] = wp_basename( $file );
-			}
-			return $metadata;
-		},
-		10,
-		2
-	);
-	add_filter(
-		'wp_calculate_image_srcset_meta',
-		function ( $image_meta, $size_array, $image_src, $attachment_id ) {
-			if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
-				unset( $image_meta['sizes'] );  // For removing srcset attribute.
-			}
-			return $image_meta;
-		},
-		10,
-		4
-	);
+function enable_svg_support() {
+	add_filter( 'upload_mimes', '_cb_upload_mimes__svg' );
+	add_filter( 'wp_check_filetype_and_ext', '_cb_wp_check_filetype_and_ext__svg', 10, 3 );
+	add_filter( 'wp_handle_upload_prefilter', '_cb_wp_handle_upload_prefilter__svg' );
+	add_filter( 'wp_prepare_attachment_for_js', '\wpinc\medi\_cb_wp_prepare_attachment_for_js__svg', 10, 2 );
+	add_filter( 'wp_generate_attachment_metadata', '\wpinc\medi\_cb_wp_generate_attachment_metadata__svg', 10, 2 );
+	add_filter( 'wp_calculate_image_srcset_meta', '\wpinc\medi\_cb_wp_calculate_image_srcset_meta__svg', 10, 4 );
 }
 
-function check_svg_secure( $file ) {
-	$cont = file_get_contents( $file );  // phpcs:ignore
+/**
+ * Callback function for 'upload_mimes' filter.
+ *
+ * @param array $mimes Mime types keyed by the file extension.
+ * @return array Mimes.
+ */
+function _cb_upload_mimes__svg( array $mimes ): array {
+	$mimes['svg']  = 'image/svg+xml';
+	$mimes['svgz'] = 'image/svg+xml';
+	return $mimes;
+}
 
-	$is_zipped = ( 0 === mb_strpos( $contents, "\x1f" . "\x8b" . "\x08" ) );
-	if ( $is_zipped ) {
+/**
+ * Callback function for 'wp_check_filetype_and_ext' filter.
+ *
+ * @param array  $data     Values for the extension, mime type, and corrected filename.
+ * @param string $file     Full path to the file.
+ * @param string $filename The name of the file.
+ * @return array Data.
+ */
+function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $filename ): array {
+	$ext = $data['ext'] ?? '';
+	if ( empty( $ext ) ) {
+		$ext = strtolower( end( explode( '.', $filename ) ) );
+	}
+	if ( in_array( $ext, array( 'svg', 'svgz' ), true ) ) {
+		$data['type'] = 'image/svg+xml';
+		$data['ext']  = $ext;
+	}
+	return $data;
+}
+
+/**
+ * Callback function for 'wp_handle_upload_prefilter' filter.
+ *
+ * @param array $file An array of data for a single file.
+ * @return array File data.
+ */
+function _cb_wp_handle_upload_prefilter__svg( array $file ): array {
+	if ( 'image/svg+xml' === $file['type'] ) {
+		if ( ! _check_svg_secure( $file['tmp_name'] ) ) {
+			$file['error'] = _x( 'Specified file was not be uploaded because it may contain security issues.', 'svg support', 'medi' );
+		}
+	}
+	return $file;
+}
+
+/**
+ * Callback function for 'wp_prepare_attachment_for_js' filter.
+ * For showing size selector on image dialog.
+ *
+ * @param array    $res        Array of prepared attachment data.
+ * @param \WP_Post $attachment Attachment object.
+ * @return array Filtered data.
+ */
+function _cb_wp_prepare_attachment_for_js__svg( array $res, \WP_Post $attachment ): array {
+	if ( 'image/svg+xml' === $res['mime'] ) {
+		$ds = _get_svg_size( get_attached_file( $attachment->ID ) );
+		if ( ! empty( $ds ) ) {
+			$res = array_merge( $res, $ds );
+		}
+		$sizes = _get_possible_sizes( $ds );
+		foreach ( $sizes as $name => &$a ) {
+			$a['url']         = $res['url'];
+			$a['orientation'] = $a['height'] > $a['width'] ? 'portrait' : 'landscape';
+		}
+		$res['sizes'] = $sizes;
+		$res['icon']  = $res['url'];
+	}
+	return $res;
+}
+
+/**
+ * Callback function for 'wp_generate_attachment_metadata' filter.
+ * For generating metadata of SVG images.
+ *
+ * @param array $metadata      An array of attachment meta data.
+ * @param int   $attachment_id Current attachment ID.
+ * @return array Filtered metadata.
+ */
+function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachment_id ): array {
+	if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+		$file = get_attached_file( $attachment_id );
+
+		$ds = _get_svg_size( $file );
+		if ( empty( $ds ) ) {
+			return array();
+		}
+
+		$rel_file = $file;
+		$uploads  = wp_get_upload_dir();
+		if ( 0 === strpos( $rel_file, $uploads['basedir'] ) ) {
+			$rel_file = str_replace( $uploads['basedir'], '', $rel_file );
+			$rel_file = ltrim( $rel_file, '/' );
+		}
+		// Default image meta.
+		$metadata = array(
+			'width'  => $ds['width'],
+			'height' => $ds['height'],
+			'file'   => $rel_file,
+			'sizes'  => array(),
+		);
+
+		$sizes = _get_possible_sizes( $ds );
+		foreach ( $sizes as $name => &$a ) {
+			$a['file']      = wp_basename( $file );
+			$a['mime-type'] = 'image/svg+xml';
+		}
+		$metadata['sizes']          = $sizes;
+		$metadata['original_image'] = wp_basename( $file );
+	}
+	return $metadata;
+}
+
+/**
+ * Callback function for 'wp_calculate_image_srcset_meta' filter.
+ * For removing srcset attributes of SVG images.
+ *
+ * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
+ * @param int[]  $size_array    An array of requested width and height values.
+ * @param string $image_src     The 'src' of the image.
+ * @param int    $attachment_id The image attachment ID or 0 if not supplied.
+ * @return array Filtered metadata.
+ */
+function _cb_wp_calculate_image_srcset_meta__svg( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
+	if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+		unset( $image_meta['sizes'] );
+	}
+	return $image_meta;
+}
+
+
+// -----------------------------------------------------------------------------
+
+
+/**
+ * Check whether a SVG file is secure.
+ *
+ * @access private
+ *
+ * @param string $path File path.
+ * @return bool True if the file is secure.
+ */
+function _check_svg_secure( string $path ): bool {
+	$cont = file_get_contents( $path );  // phpcs:ignore
+	if ( 0 === mb_strpos( $cont, "\x1f\x8b\x08" ) ) {
 		$cont = gzdecode( $cont );
 		if ( false === $cont ) {
 			return false;
@@ -132,35 +174,43 @@ function check_svg_secure( $file ) {
 	}
 	$svg = @simplexml_load_string( $cont, 'SimpleXMLIterator' );   // phpcs:ignore
 	if ( $svg ) {
-		return check_svg_tree( $svg );
+		return _check_svg_tree( $svg );
 	}
 	return false;
 }
 
-function check_svg_tree( $sxi ) {
-	$not_allowed_tag        = array( 'script', 'use', 'a' );
-	$not_allowed_attr_start = array( 'on', 'href', 'xlink:href' );
+/**
+ * Check SVG file recursively.
+ *
+ * @access private
+ *
+ * @param \SimpleXMLIterator $sxi Iterator of XML nodes.
+ * @return bool True if the current node is secure.
+ */
+function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
+	$ng_tag        = array( 'script', 'use', 'a' );
+	$ng_attr_start = array( 'on', 'href', 'xlink:href' );
 
 	for ( $sxi->rewind(); $sxi->valid(); $sxi->next() ) {  // phpcs:ignore
-		if ( in_array( $sxi->key(), $not_allowed_tag, true ) ) {
+		if ( in_array( $sxi->key(), $ng_tag, true ) ) {
 			return false;
 		}
 		$ats = $sxi->current()->attributes();
 		if ( $ats ) {
 			foreach ( $ats as $k => $v ) {
 				$k = strtolower( $k );
-				foreach ( $not_allowed_attr_start as $start ) {
+				foreach ( $ng_attr_start as $start ) {
 					if ( 0 === strpos( $k, $start ) ) {
 						return false;
 					}
 				}
-				if ( has_remote_url( $v ) ) {
+				if ( _has_remote_url( $v ) ) {
 					return false;
 				}
 			}
 		}
 		if ( $sxi->hasChildren() ) {
-			if ( ! check_svg_tree( $sxi->current() ) ) {
+			if ( ! _check_svg_tree( $sxi->current() ) ) {
 				return false;
 			}
 		}
@@ -168,7 +218,15 @@ function check_svg_tree( $sxi ) {
 	return true;
 }
 
-function has_remote_url( $v ) {
+/**
+ * Check whether a string contains a remote URL.
+ *
+ * @access private
+ *
+ * @param string $v String.
+ * @return bool True if it contains a remote URL.
+ */
+function _has_remote_url( string $v ): bool {
 	$v = trim( preg_replace( '/[^ -~]/xu', '', $v ) );
 
 	$has_url = preg_match( '~^url\(\s*[\'"]\s*(.*)\s*[\'"]\s*\)$~xi', $v, $match );
@@ -179,8 +237,23 @@ function has_remote_url( $v ) {
 	return preg_match( '~^((https?|ftp|file):)?//~xi', $v );
 }
 
-function get_svg_size( $svg ) {
-	$svg = @simplexml_load_file( $svg );   // phpcs:ignore
+/**
+ * Retrieves the size of SVG image.
+ *
+ * @access private
+ *
+ * @param string $path File path.
+ * @return array Array of dimension.
+ */
+function _get_svg_size( string $path ): array {
+	$cont = file_get_contents( $path );  // phpcs:ignore
+	if ( 0 === mb_strpos( $cont, "\x1f\x8b\x08" ) ) {
+		$cont = gzdecode( $cont );
+		if ( false === $cont ) {
+			return false;
+		}
+	}
+	$svg = @simplexml_load_string( $cont );   // phpcs:ignore
 	$w   = 0;
 	$h   = 0;
 	if ( $svg ) {
@@ -205,7 +278,15 @@ function get_svg_size( $svg ) {
 	);
 }
 
-function get_sizes( $ds ) {
+/**
+ * Undocumented function
+ *
+ * @access private
+ *
+ * @param array $ds Dimension of image.
+ * @return array Array of size name to sizes.
+ */
+function _get_possible_sizes( array $ds ): array {
 	$sizes = array();
 	$ais   = wp_get_additional_image_sizes();
 	$names = apply_filters(
@@ -231,9 +312,26 @@ function get_sizes( $ds ) {
 			$h = $ais[ $name ]['height'];
 		}
 		if ( $w && $h ) {
+			$ow = $ds['width'] ?? 1;
+			$oh = $ds['height'] ?? 1;
+			if ( 'full' !== $name ) {
+				if ( $w < $h ) {  // Portrait.
+					if ( $ow / $oh < $w / $h ) {  // Original is vertically narrower.
+						$w = $ow * $h / $oh;
+					} else {
+						$h = $oh * $w / $ow;
+					}
+				} else {  // Landscape.
+					if ( $w / $h < $ow / $oh ) {  // Original is horizontally narrower.
+						$h = $oh * $w / $ow;
+					} else {
+						$w = $ow * $h / $oh;
+					}
+				}
+			}
 			$sizes[ $name ] = array(
-				'width'  => $w,
-				'height' => $h,
+				'width'  => absint( $w ),
+				'height' => absint( $h ),
 			);
 		}
 	}

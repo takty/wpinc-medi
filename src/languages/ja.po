@@ -1,0 +1,20 @@
+# Translation of Medi - Development in Japanese
+# @package Wpinc Medi
+# @author Takuto Yanagida
+# @version 2022-01-28
+
+# SVG Support ------------------------------------------------------------------
+
+msgctxt "svg support"
+msgid "Specified file was not be uploaded because it may contain security issues."
+msgstr "指定されたファイルは、セキュリティ上の問題を含んでいる可能性があるため、アップロードできませんでした。"
+
+# Sizes ------------------------------------------------------------------------
+
+msgctxt "size"
+msgid "Small"
+msgstr "小"
+
+msgctxt "size"
+msgid "Medium Large"
+msgstr "やや大"

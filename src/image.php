@@ -1,128 +1,138 @@
 <?php
 /**
- * Custom Template Tags for Responsive Images
+ * Utilities for Images
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-26
+ * @version 2022-01-28
  */
 
 namespace wpinc\medi;
 
-function get_thumbnail_src( $size = 'large', $post_id = false, $meta_key = false ) {
-	$tid = get_thumbnail_id( $post_id, $meta_key );
-	if ( $tid === false ) {
+/**
+ * Displays an HTML img element of post thumbnail image.
+ *
+ * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string              $meta_key (Optional) Meta key.
+ */
+function the_thumbnail_image( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): void {
+	echo get_the_thumbnail_image( $post, $size, $meta_key );  // phpcs:ignore
+}
+
+/**
+ * Displays an HTML figure element of post thumbnail image.
+ *
+ * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string              $meta_key (Optional) Meta key.
+ */
+function the_thumbnail_figure( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): void {
+	echo get_the_thumbnail_figure( $post, $size, $meta_key );  // phpcs:ignore
+}
+
+/**
+ * Gets an HTML img element of post thumbnail image.
+ *
+ * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string              $meta_key (Optional) Meta key.
+ * @return string HTML img element or empty string on failure.
+ */
+function get_the_thumbnail_image( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
+	$aid = get_thumbnail_id( $post, $meta_key );
+	if ( null === $aid ) {
 		return '';
 	}
-	return get_attachment_src( $size, $tid );
+	return wp_get_attachment_image( $aid, $size );
 }
 
-function get_first_image_src( $size = 'large' ) {
-	$fis = _scrape_first_image_src();
-	if ( false === $fis ) {
+/**
+ * Gets an HTML figure element of post thumbnail image.
+ *
+ * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string              $meta_key (Optional) Meta key.
+ * @return string HTML figure element or empty string on failure.
+ */
+function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
+	$aid = get_thumbnail_id( $post, $meta_key );
+	if ( null === $aid ) {
 		return '';
 	}
-	$aid = get_attachment_id( $fis );
-	if ( false === $aid ) {
-		return '';
-	}
-	return get_attachment_src( $size, $aid );
-}
+	$img = wp_get_attachment_image( $aid, $size );
 
-function get_attachment_src( $size = 'large', $aid ) {
-	$ais = wp_get_attachment_image_src( $aid, $size );
-	return false === $ais ? '' : $ais[0];
-}
-
-function get_thumbnail_id( $post_id = false, $meta_key = false ) {
-	global $post;
-	if ( false === $post_id ) {
-		if ( ! $post ) {
-			return false;
-		}
-		$post_id = $post->ID;
-	}
-	if ( false === $meta_key ) {
-		if ( ! has_post_thumbnail( $post_id ) ) {
-			return false;
-		}
-		return get_post_thumbnail_id( $post_id );
-	}
-	$pm = get_post_meta( $post_id, $meta_key, true );
-	return empty( $pm ) ? false : $pm;
-}
-
-function get_attachment_id( $url ) {
-	global $wpdb;
-	preg_match( '/([^\/]+?)(-e\d+)?(-\d+x\d+)?(\.\w+)?$/', $url, $matches );
-	$guid = str_replace( $matches[0], $matches[1] . $matches[4], $url );
-	$v    = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE guid = %s", $guid ) );
-	return null === $v ? false : ( (int) $v );
-}
-
-function get_first_image_id() {
-	$fis = get_first_image_src();
-	if ( false === $fis ) {
-		return false;
-	}
-	$aid = get_attachment_id( $fis );
-	if ( false === $aid ) {
-		return false;
-	}
-	return $aid;
-}
-
-function _scrape_first_image_src() {
-	if ( ! is_singular() ) {
-		return false;
-	}
-	global $post;
-	preg_match_all( '/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $post->post_content, $ms );
-	if ( empty( $ms[1][0] ) ) {
-		return false;
-	}
-	$src = $ms[1][0];
-	return $src;
+	$p   = get_post( $aid );
+	$cap = empty( $p ) ? '' : "<figcaption class=\"wp-caption-text\">$p->post_excerpt</figcaption>";
+	return "<figure class=\"wp-caption\">$img$cap</figure>";
 }
 
 
 // -----------------------------------------------------------------------------
 
 
-function the_thumbnail_image( $size = 'large', $post_id = false, $meta_key = false ) {
-	echo get_the_thumbnail_image( $size, $post_id, $meta_key );
+/**
+ * Retrieves thumbnail image ID
+ *
+ * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string              $meta_key (Optional) Post meta key.
+ * @return int|null ID if the thumbnail image is found, or null.
+ */
+function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?int {
+	$post = get_post( $post );
+	if ( ! $post ) {
+		return null;
+	}
+	$id = get_post_meta( $post->ID, $meta_key, true );
+	return empty( $id ) ? null : (int) $id;
 }
 
-function the_thumbnail_figure( $size = 'large', $post_id = false, $meta_key = false ) {
-	echo get_the_thumbnail_figure( $size, $post_id, $meta_key );
+/**
+ * Retrieves attachment ID of the first image src from post contents.
+ *
+ * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
+ * @return int|null Attachment ID if the attachment is found, or null.
+ */
+function get_first_image_id( $post = null ): ?int {
+	$src = _scrape_first_image_src();
+	if ( empty( $src ) ) {
+		return null;
+	}
+	return get_attachment_id( $src );
 }
 
-function get_the_thumbnail_image( $size = 'large', $post_id = false, $meta_key = false ) {
-	$tid = get_thumbnail_id( $post_id, $meta_key );
-	if ( false === $tid ) {
-		return '';
-	}
-	$ais = wp_get_attachment_image_src( $tid, $size );
-	if ( false === $ais ) {
-		return '';
-	}
-	$src = esc_attr( $ais[0] );
-	return "<img class=\"size-$size\" src=\"$src\" alt=\"\" width=\"$ais[1]\" height=\"$ais[2]\">";
+/**
+ * Retrieves attachment ID from URL.
+ *
+ * @param string $url URL of an attachment.
+ * @return int|null Attachment ID if the attachment is found, or null.
+ */
+function get_attachment_id( string $url ): ?int {
+	global $wpdb;
+	preg_match( '/([^\/]+?)(-e\d+)?(-\d+x\d+)?(\.\w+)?$/', $url, $matches );
+	$guid  = str_replace( $matches[0], $matches[1] . $matches[4], $url );
+	$query = $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE guid = %s", $guid );
+	$val   = $wpdb->get_var( $query );  // phpcs:ignore
+	return null === $val ? null : ( (int) $val );
 }
 
-function get_the_thumbnail_figure( $size = 'large', $post_id = false, $meta_key = false ) {
-	$tid = get_thumbnail_id( $post_id, $meta_key );
-	if ( false === $tid ) {
+/**
+ * Scrapes the first image src from post contents.
+ *
+ * @access private
+ *
+ * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
+ * @return string URL if the first image is found, or '';
+ */
+function _scrape_first_image_src( $post = null ): string {
+	$post = get_post( $post );
+	if ( ! $post ) {
 		return '';
 	}
-	$ais = wp_get_attachment_image_src( $tid, $size );
-	if ( false === $ais ) {
+	preg_match_all( '/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $post->post_content, $ms );
+	if ( empty( $ms[1][0] ) ) {
 		return '';
 	}
-	$src = esc_attr( $ais[0] );
-	$img = "<img class=\"size-$size\" src=\"$src\" alt=\"\" width=\"$ais[1]\" height=\"$ais[2]\">";
-
-	$p   = get_post( $tid );
-	$exc = empty( $p ) ? '' : $p->post_excerpt;
-	return "<figure class=\"wp-caption\">$img<figcaption class=\"wp-caption-text\">$exc</figcaption></figure>";
+	$src = $ms[1][0];
+	return $src;
 }
