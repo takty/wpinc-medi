@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-28
+ * @version 2022-01-29
  */
 
 namespace wpinc\medi;
@@ -13,9 +13,9 @@ namespace wpinc\medi;
  * Enables SVG file supports.
  */
 function enable_svg_support() {
-	add_filter( 'upload_mimes', '_cb_upload_mimes__svg' );
-	add_filter( 'wp_check_filetype_and_ext', '_cb_wp_check_filetype_and_ext__svg', 10, 3 );
-	add_filter( 'wp_handle_upload_prefilter', '_cb_wp_handle_upload_prefilter__svg' );
+	add_filter( 'upload_mimes', '\wpinc\medi\_cb_upload_mimes__svg' );
+	add_filter( 'wp_check_filetype_and_ext', '\wpinc\medi\_cb_wp_check_filetype_and_ext__svg', 10, 3 );
+	add_filter( 'wp_handle_upload_prefilter', '\wpinc\medi\_cb_wp_handle_upload_prefilter__svg' );
 	add_filter( 'wp_prepare_attachment_for_js', '\wpinc\medi\_cb_wp_prepare_attachment_for_js__svg', 10, 2 );
 	add_filter( 'wp_generate_attachment_metadata', '\wpinc\medi\_cb_wp_generate_attachment_metadata__svg', 10, 2 );
 	add_filter( 'wp_calculate_image_srcset_meta', '\wpinc\medi\_cb_wp_calculate_image_srcset_meta__svg', 10, 4 );
