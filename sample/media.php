@@ -4,7 +4,7 @@
  *
  * @package Sample
  * @author Takuto Yanagida
- * @version 2022-01-29
+ * @version 2022-01-30
  */
 
 namespace sample;
@@ -88,8 +88,8 @@ function get_first_image_id( $post = null ): ?int {
  * @param string $url URL of an attachment.
  * @return int|null Attachment ID if the attachment is found, or null.
  */
-function get_attachment_id( string $url ): ?int {
-	return \wpinc\medi\get_attachment_id( $url );
+function url_to_attachment_id( string $url ): ?int {
+	return \wpinc\medi\url_to_attachment_id( $url );
 }
 
 
