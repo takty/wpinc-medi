@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-28
+ * @version 2022-01-30
  */
 
 namespace wpinc\medi;
@@ -98,7 +98,7 @@ function get_first_image_id( $post = null ): ?int {
 	if ( empty( $src ) ) {
 		return null;
 	}
-	return get_attachment_id( $src );
+	return url_to_attachment_id( $src );
 }
 
 /**
@@ -107,7 +107,7 @@ function get_first_image_id( $post = null ): ?int {
  * @param string $url URL of an attachment.
  * @return int|null Attachment ID if the attachment is found, or null.
  */
-function get_attachment_id( string $url ): ?int {
+function url_to_attachment_id( string $url ): ?int {
 	global $wpdb;
 	preg_match( '/([^\/]+?)(-e\d+)?(-\d+x\d+)?(\.\w+)?$/', $url, $matches );
 	$guid  = str_replace( $matches[0], $matches[1] . $matches[4], $url );
