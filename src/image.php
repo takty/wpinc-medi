@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-30
+ * @version 2022-02-07
  */
 
 namespace wpinc\medi;
@@ -91,9 +91,9 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?
  * Retrieves attachment ID of the first image src from post contents.
  *
  * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
- * @return int|null Attachment ID if the attachment is found, or null.
+ * @return int The found post ID, or 0 on failure.
  */
-function get_first_image_id( $post = null ): ?int {
+function get_first_image_id( $post = null ): int {
 	$src = _scrape_first_image_src();
 	if ( empty( $src ) ) {
 		return null;
@@ -105,15 +105,22 @@ function get_first_image_id( $post = null ): ?int {
  * Retrieves attachment ID from URL.
  *
  * @param string $url URL of an attachment.
- * @return int|null Attachment ID if the attachment is found, or null.
+ * @return int The found post ID, or 0 on failure.
  */
-function url_to_attachment_id( string $url ): ?int {
-	global $wpdb;
-	preg_match( '/([^\/]+?)(-e\d+)?(-\d+x\d+)?(\.\w+)?$/', $url, $matches );
-	$guid  = str_replace( $matches[0], $matches[1] . $matches[4], $url );
-	$query = $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE guid = %s", $guid );
-	$val   = $wpdb->get_var( $query );  // phpcs:ignore
-	return null === $val ? null : ( (int) $val );
+function url_to_attachment_id( string $url ): int {
+	$dir = \wp_get_upload_dir();
+	if ( 0 !== strpos( $url, $dir['baseurl'] ) ) {
+		return 0;
+	}
+	$id = \attachment_url_to_postid( $url );
+	if ( $id ) {
+		return $id;
+	}
+	$full_url = preg_replace( '/(-\d+x\d+)(\.[^.]+){0,1}$/i', '${2}', $url );
+	if ( $url === $full_url ) {
+		return 0;
+	}
+	return \attachment_url_to_postid( $full_url );
 }
 
 /**

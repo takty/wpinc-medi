@@ -4,7 +4,7 @@
  *
  * @package Sample
  * @author Takuto Yanagida
- * @version 2022-01-30
+ * @version 2022-02-07
  */
 
 namespace sample;
@@ -76,9 +76,9 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?
  * Retrieves attachment ID of the first image src from post contents.
  *
  * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
- * @return int|null Attachment ID if the attachment is found, or null.
+ * @return int The found post ID, or 0 on failure.
  */
-function get_first_image_id( $post = null ): ?int {
+function get_first_image_id( $post = null ): int {
 	return \wpinc\medi\get_first_image_id( $post );
 }
 
@@ -86,9 +86,9 @@ function get_first_image_id( $post = null ): ?int {
  * Retrieves attachment ID from URL.
  *
  * @param string $url URL of an attachment.
- * @return int|null Attachment ID if the attachment is found, or null.
+ * @return int The found post ID, or 0 on failure.
  */
-function url_to_attachment_id( string $url ): ?int {
+function url_to_attachment_id( string $url ): int {
 	return \wpinc\medi\url_to_attachment_id( $url );
 }
 
