@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-28
+ * @version 2022-02-07
  */
 
 namespace wpinc\medi;
@@ -42,10 +42,10 @@ function add_custom_image_sizes() {
 			foreach ( $sizes as $name => $label ) {
 				$ns[ $name ] = $label;
 				if ( 'thumbnail' === $name ) {
-					$ns['small'] = _x( 'Small', 'size', 'medi' );
+					$ns['small'] = _x( 'Small', 'size', 'wpinc_medi' );
 				}
 				if ( 'medium' === $name ) {
-					$ns['medium_large'] = _x( 'Medium Large', 'size', 'medi' );
+					$ns['medium_large'] = _x( 'Medium Large', 'size', 'wpinc_medi' );
 				}
 			}
 			return $ns;

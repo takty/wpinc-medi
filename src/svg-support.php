@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-29
+ * @version 2022-02-07
  */
 
 namespace wpinc\medi;
@@ -62,7 +62,7 @@ function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $
 function _cb_wp_handle_upload_prefilter__svg( array $file ): array {
 	if ( 'image/svg+xml' === $file['type'] ) {
 		if ( ! _check_svg_secure( $file['tmp_name'] ) ) {
-			$file['error'] = _x( 'Specified file was not be uploaded because it may contain security issues.', 'svg support', 'medi' );
+			$file['error'] = _x( 'Specified file was not be uploaded because it may contain security issues.', 'svg support', 'wpinc_medi' );
 		}
 	}
 	return $file;
