@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-01-26
+ * @version 2022-02-08
  */
 
 namespace wpinc\medi;
@@ -13,22 +13,28 @@ namespace wpinc\medi;
  * Adds shortcode for YouTube movies.
  */
 function add_youtube_shortcode() {
-	add_shortcode( 'youtube', '\wpinc\medi\_sc_youtube' );
+	if ( ! is_admin() ) {
+		add_shortcode( 'youtube', '\wpinc\medi\_sc_youtube' );
+	}
 }
 
 /**
  * Adds shortcode for Vimeo movies.
  */
 function add_vimeo_shortcode() {
-	add_shortcode( 'vimeo', '\wpinc\medi\_sc_vimeo' );
+	if ( ! is_admin() ) {
+		add_shortcode( 'vimeo', '\wpinc\medi\_sc_vimeo' );
+	}
 }
 
 /**
  * Adds shortcode for Instagram.
  */
 function add_instagram_shortcode() {
-	add_shortcode( 'instagram', '\wpinc\medi\_sc_instagram' );
-	add_action( 'wp_enqueue_scripts', '\wpinc\medi\_cb_wp_enqueue_scripts__instagram_shortcode' );
+	if ( ! is_admin() ) {
+		add_shortcode( 'instagram', '\wpinc\medi\_sc_instagram' );
+		add_action( 'wp_enqueue_scripts', '\wpinc\medi\_cb_wp_enqueue_scripts__instagram_shortcode' );
+	}
 }
 
 

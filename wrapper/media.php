@@ -4,15 +4,15 @@
  *
  * @package Sample
  * @author Takuto Yanagida
- * @version 2022-02-07
+ * @version 2022-02-08
  */
 
 namespace sample;
 
 require_once __DIR__ . '/medi/image.php';
-require_once __DIR__ . '/medi/pdf-support.php';
 require_once __DIR__ . '/medi/shortcode.php';
 require_once __DIR__ . '/medi/size.php';
+require_once __DIR__ . '/medi/pdf-support.php';
 require_once __DIR__ . '/medi/svg-support.php';
 
 /**
@@ -99,21 +99,21 @@ function url_to_attachment_id( string $url ): int {
 /**
  * Adds shortcode for YouTube movies.
  */
-function add_youtube_shortcode() {
+function add_youtube_shortcode(): void {
 	\wpinc\medi\add_youtube_shortcode();
 }
 
 /**
  * Adds shortcode for Vimeo movies.
  */
-function add_vimeo_shortcode() {
+function add_vimeo_shortcode(): void {
 	\wpinc\medi\add_vimeo_shortcode();
 }
 
 /**
  * Adds shortcode for Instagram.
  */
-function add_instagram_shortcode() {
+function add_instagram_shortcode(): void {
 	\wpinc\medi\add_instagram_shortcode();
 }
 
@@ -124,14 +124,14 @@ function add_instagram_shortcode() {
 /**
  * Updates Image Size Options.
  */
-function update_image_size_options() {
+function update_image_size_options(): void {
 	\wpinc\medi\update_image_size_options();
 }
 
 /**
  * Adds Custom Image Sizes.
  */
-function add_custom_image_sizes() {
+function add_custom_image_sizes(): void {
 	\wpinc\medi\add_custom_image_sizes();
 }
 
@@ -144,7 +144,7 @@ function add_custom_image_sizes() {
  *
  * @param string $url_to (Optional) URL to the script.
  */
-function enable_pdf_post_thumbnail( ?string $url_to = null ) {
+function enable_pdf_post_thumbnail( ?string $url_to = null ): void {
 	\wpinc\medi\enable_pdf_post_thumbnail( $url_to );
 }
 
@@ -155,6 +155,6 @@ function enable_pdf_post_thumbnail( ?string $url_to = null ) {
 /**
  * Enables SVG file supports.
  */
-function enable_svg_support() {
+function enable_svg_support(): void {
 	\wpinc\medi\enable_svg_support();
 }
