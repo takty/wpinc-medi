@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-02-08
+ * @version 2022-02-14
  */
 
 namespace wpinc\medi;
@@ -175,7 +175,7 @@ function _check_svg_secure( string $path ): bool {
 			return false;
 		}
 	}
-	$svg = @simplexml_load_string( $cont, 'SimpleXMLIterator' );   // phpcs:ignore
+	$svg = @simplexml_load_string( $cont, 'SimpleXMLIterator' );  // phpcs:ignore
 	if ( $svg ) {
 		return _check_svg_tree( $svg );
 	}
@@ -256,7 +256,7 @@ function _get_svg_size( string $path ): array {
 			return false;
 		}
 	}
-	$svg = @simplexml_load_string( $cont );   // phpcs:ignore
+	$svg = @simplexml_load_string( $cont );  // phpcs:ignore
 	$w   = 0;
 	$h   = 0;
 	if ( $svg ) {
@@ -264,8 +264,8 @@ function _get_svg_size( string $path ): array {
 		if ( isset( $ats->width, $ats->height ) && is_numeric( $ats->width ) && is_numeric( $ats->height ) ) {
 			$w = floatval( $ats->width );
 			$h = floatval( $ats->height );
-		} elseif ( isset( $ats->viewBox ) ) {   // phpcs:ignore
-			$ss = explode( ' ', $ats->viewBox );   // phpcs:ignore
+		} elseif ( isset( $ats->viewBox ) ) {  // phpcs:ignore
+			$ss = explode( ' ', $ats->viewBox );  // phpcs:ignore
 			if ( isset( $ss[2], $ss[3] ) ) {
 				$w = floatval( $ss[2] );
 				$h = floatval( $ss[3] );
