@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-02-09
+ * @version 2022-03-04
  */
 
 namespace wpinc\medi;
@@ -54,12 +54,12 @@ function _cb_ajax_query_attachments_args( array $query ): array {
  * @param string $url_to URL to the script.
  */
 function _cb_admin_enqueue_scripts( string $url_to ) {
-	wp_enqueue_script( 'wpinc_medi_pdf_support', \wpinc\abs_url( $url_to, './assets/js/pdf-support.min.js' ), array(), '1.0', true );
+	wp_enqueue_script( 'wpinc-medi-pdf-support', \wpinc\abs_url( $url_to, './assets/js/pdf-support.min.js' ), array(), '1.0', true );
 
 	$translations = array(
 		'label_image_pdf'      => __( 'Image' ) . ' & ' . __( 'PDF' ),
 		'label_image'          => __( 'Image' ),
 		'label_featured_image' => __( 'Featured Image' ),
 	);
-	wp_localize_script( 'wpinc_medi_pdf_support', 'wpinc_medi_pdf_support', $translations );
+	wp_localize_script( 'wpinc-medi-pdf-support', 'wpinc_medi_pdf_support', $translations );
 }
