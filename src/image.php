@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-02-07
+ * @version 2022-03-04
  */
 
 namespace wpinc\medi;
@@ -76,7 +76,7 @@ function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_k
  *
  * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
  * @param string              $meta_key (Optional) Post meta key.
- * @return int|null ID if the thumbnail image is found, or null.
+ * @return int|null Attachment ID if the thumbnail is found, or null.
  */
 function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?int {
 	$post = get_post( $post );
@@ -91,9 +91,9 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?
  * Retrieves attachment ID of the first image src from post contents.
  *
  * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
- * @return int The found post ID, or 0 on failure.
+ * @return int|null Attachment ID if the image is found, or null.
  */
-function get_first_image_id( $post = null ): int {
+function get_first_image_id( $post = null ): ?int {
 	$src = _scrape_first_image_src();
 	if ( empty( $src ) ) {
 		return null;
@@ -105,12 +105,12 @@ function get_first_image_id( $post = null ): int {
  * Retrieves attachment ID from URL.
  *
  * @param string $url URL of an attachment.
- * @return int The found post ID, or 0 on failure.
+ * @return int|null Attachment ID if the attachment is found, or null.
  */
-function url_to_attachment_id( string $url ): int {
+function url_to_attachment_id( string $url ): ?int {
 	$dir = \wp_get_upload_dir();
 	if ( 0 !== strpos( $url, $dir['baseurl'] ) ) {
-		return 0;
+		return null;
 	}
 	$id = \attachment_url_to_postid( $url );
 	if ( $id ) {
@@ -118,7 +118,7 @@ function url_to_attachment_id( string $url ): int {
 	}
 	$full_url = preg_replace( '/(-\d+x\d+)(\.[^.]+){0,1}$/i', '${2}', $url );
 	if ( $url === $full_url ) {
-		return 0;
+		return null;
 	}
 	return \attachment_url_to_postid( $full_url );
 }

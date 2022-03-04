@@ -66,7 +66,7 @@ function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_k
  *
  * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
  * @param string              $meta_key (Optional) Post meta key.
- * @return int|null ID if the thumbnail image is found, or null.
+ * @return int|null Attachment ID if the thumbnail is found, or null.
  */
 function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?int {
 	return \wpinc\medi\get_thumbnail_id( $post, $meta_key );
@@ -76,9 +76,9 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?
  * Retrieves attachment ID of the first image src from post contents.
  *
  * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
- * @return int The found post ID, or 0 on failure.
+ * @return int|null Attachment ID if the image is found, or null.
  */
-function get_first_image_id( $post = null ): int {
+function get_first_image_id( $post = null ): ?int {
 	return \wpinc\medi\get_first_image_id( $post );
 }
 
@@ -86,9 +86,9 @@ function get_first_image_id( $post = null ): int {
  * Retrieves attachment ID from URL.
  *
  * @param string $url URL of an attachment.
- * @return int The found post ID, or 0 on failure.
+ * @return int|null Attachment ID if the attachment is found, or null.
  */
-function url_to_attachment_id( string $url ): int {
+function url_to_attachment_id( string $url ): ?int {
 	return \wpinc\medi\url_to_attachment_id( $url );
 }
 
