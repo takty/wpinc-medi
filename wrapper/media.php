@@ -4,7 +4,7 @@
  *
  * @package Sample
  * @author Takuto Yanagida
- * @version 2022-02-08
+ * @version 2022-05-31
  */
 
 namespace sample;
@@ -115,6 +115,13 @@ function add_vimeo_shortcode(): void {
  */
 function add_instagram_shortcode(): void {
 	\wpinc\medi\add_instagram_shortcode();
+}
+
+/**
+ * Adds shortcode for Google Calendars.
+ */
+function add_google_calendar_shortcode() {
+	\wpinc\medi\add_google_calendar_shortcode();
 }
 
 

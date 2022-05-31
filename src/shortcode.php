@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-02-08
+ * @version 2022-05-31
  */
 
 namespace wpinc\medi;
@@ -37,6 +37,16 @@ function add_instagram_shortcode() {
 	}
 }
 
+/**
+ * Adds shortcode for Google calendars.
+ */
+function add_google_calendar_shortcode() {
+	if ( ! is_admin() ) {
+		add_shortcode( 'google_calendar', '\wpinc\medi\_sc_google_calendar' );
+		add_shortcode( 'gcal', '\wpinc\medi\_sc_google_calendar' );
+	}
+}
+
 
 // -----------------------------------------------------------------------------
 
@@ -52,7 +62,7 @@ function add_instagram_shortcode() {
 function _sc_youtube( array $atts ): string {
 	return _make_video_frame(
 		$atts,
-		'<iframe src="https://www.youtube.com/embed/%s" width="%s" height="%s" frameborder="0" allow="autoplay;encrypted-media;fullscreen;picture-in-picture"></iframe>'
+		'<iframe class="wpinc-medi-youtube" src="https://www.youtube.com/embed/%s" width="%s" height="%s" frameborder="0" allow="autoplay;encrypted-media;fullscreen;picture-in-picture"></iframe>'
 	);
 }
 
@@ -67,7 +77,7 @@ function _sc_youtube( array $atts ): string {
 function _sc_vimeo( array $atts ): string {
 	return _make_video_frame(
 		$atts,
-		'<iframe src="https://player.vimeo.com/video/%s" width="%s" height="%s" frameborder="0" allow="autoplay;fullscreen"></iframe>'
+		'<iframe class="wpinc-medi-vimeo" src="https://player.vimeo.com/video/%s" width="%s" height="%s" frameborder="0" allow="autoplay;fullscreen"></iframe>'
 	);
 }
 
@@ -173,4 +183,113 @@ function _cb_wp_enqueue_scripts__instagram_shortcode() {
 	if ( $post && has_shortcode( $post->post_content, 'instagram' ) ) {
 		wp_enqueue_script( 'instagram', '//platform.instagram.com/en_US/embeds.js', array(), 1.0, true );
 	}
+}
+
+
+// -----------------------------------------------------------------------------
+
+
+/**
+ * Callback function for shortcode 'google-calendar' and 'gcal'.
+ *
+ * @access private
+ *
+ * @param array $atts Attributes.
+ * @return string Result of the shortcode.
+ */
+function _sc_google_calendar( array $atts ): string {
+	static $count = 0;
+
+	$atts = array_change_key_case( $atts );
+
+	$mk = array(
+		'wkst'   => 'weekstart',
+		'hl'     => 'lang',
+		'ctz'    => 'timezone',
+		'showtz' => 'showtimezone',
+	);
+	foreach ( $mk as $from => $to ) {
+		if ( isset( $atts[ $from ] ) ) {
+			$atts[ $to ] = $atts[ $from ];
+		}
+	}
+	if ( in_array( 'responsive', $atts, true ) ) {
+		$atts['responsive'] = '1';
+	}
+	$atts = shortcode_atts(
+		array(
+			'id'            => '',
+			'width'         => '',
+			'aspect'        => '1:1',
+			'responsive'    => '0',
+			'mobilewidth'   => '600',
+			'mode'          => 'MONTH',  // One of these: WEEK, MONTH, AGENDA.
+			'weekstart'     => '1',      // One of these: 1 (Sun), 2 (Mon), 7 (Sat).
+			'lang'          => 'ja',     // en.
+			'timezone'      => 'Asia/Tokyo',
+			'showtitle'     => '1',
+			'shownav'       => '1',
+			'showdate'      => '1',
+			'showprint'     => '1',
+			'showtabs'      => '1',
+			'showcalendars' => '1',
+			'showtimezone'  => '1',
+		),
+		$atts
+	);
+	if ( empty( $atts['id'] ) ) {
+		return '';
+	}
+	list( $w, $h ) = _extract_aspect_size( $atts['aspect'] );
+	$is_responsive = ( '1' === $atts['responsive'] && 'AGENDA' !== $atts['mode'] );
+
+	$frm = '<iframe class="wpinc-medi-gcal" id="wpinc-medi-gcal-%s" src="%s" width="%s" height="%s" frameborder="0" scrolling="no"></iframe>';
+	$url = 'https://calendar.google.com/calendar/embed?';
+
+	$qps = array(
+		'src'           => $atts['id'],
+		'mode'          => $atts['mode'],
+		'wkst'          => $atts['weekstart'],
+		'hl'            => $atts['lang'],
+		'ctz'           => $atts['timezone'],
+		'showTz'        => $atts['showtimezone'],
+		'showNav'       => $atts['shownav'],
+		'showDate'      => $atts['showdate'],
+		'showTabs'      => $atts['showtabs'],
+		'showPrint'     => $atts['showprint'],
+		'showTitle'     => $atts['showtitle'],
+		'showCalendars' => $atts['showcalendars'],
+	);
+	$tag = sprintf( $frm, $count, esc_url( $url . http_build_query( $qps ) ), esc_attr( $w ), esc_attr( $h ) );
+
+	if ( $is_responsive ) {
+		$qps['mode']          = 'AGENDA';
+		$qps['showTz']        = '0';
+		$qps['showPrint']     = '0';
+		$qps['showCalendars'] = '0';
+
+		$tag_m = sprintf( $frm, "m-$count", esc_url( $url . http_build_query( $qps ) ), esc_attr( $w ), esc_attr( $h ) );
+
+		$sty = array(
+			"#wpinc-medi-gcal-m-$count { display: none; }",
+			'@media screen and (max-width: ' . intval( $atts['mobilewidth'] ) . 'px) {',
+			"#wpinc-medi-gcal-$count { display: none; }",
+			"#wpinc-medi-gcal-m-$count { display: initial; }",
+			'}',
+		);
+	}
+	++$count;
+
+	ob_start();
+	if ( empty( $atts['width'] ) ) {
+		echo "$tag\n" . ( $is_responsive ? "$tag_m\n" : '' );  // phpcs:ignore
+	} else {
+		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
+		echo "\t$tag\n" . ( $is_responsive ? "\t$tag_m\n" : '' );  // phpcs:ignore
+		echo "</div>\n";
+	}
+	if ( $is_responsive ) {
+		echo '<style>' . esc_html( implode( ' ', $sty ) ) . '</style>';
+	}
+	return ob_get_clean();
 }
