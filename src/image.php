@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-03-04
+ * @version 2022-07-01
  */
 
 namespace wpinc\medi;
@@ -63,7 +63,7 @@ function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_k
 	$img = wp_get_attachment_image( $aid, $size );
 
 	$p   = get_post( $aid );
-	$cap = empty( $p ) ? '' : "<figcaption class=\"wp-caption-text\">$p->post_excerpt</figcaption>";
+	$cap = $p ? "<figcaption class=\"wp-caption-text\">$p->post_excerpt</figcaption>" : '';
 	return "<figure class=\"wp-caption\">$img$cap</figure>";
 }
 
