@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-05-31
+ * @version 2023-06-23
  */
 
 namespace wpinc\medi;
@@ -288,7 +288,7 @@ function _sc_google_calendar( array $atts ): string {
 		echo "\t$tag\n" . ( $is_responsive ? "\t$tag_m\n" : '' );  // phpcs:ignore
 		echo "</div>\n";
 	}
-	if ( $is_responsive ) {
+	if ( $is_responsive && is_array( $sty ) ) {
 		echo '<style>' . esc_html( implode( ' ', $sty ) ) . '</style>';
 	}
 	return ob_get_clean();
