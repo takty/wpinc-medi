@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-02-14
+ * @version 2023-06-23
  */
 
 namespace wpinc\medi;
@@ -47,7 +47,8 @@ function _cb_upload_mimes__svg( array $mimes ): array {
 function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $filename ): array {
 	$ext = $data['ext'] ?? '';
 	if ( empty( $ext ) ) {
-		$ext = strtolower( end( explode( '.', $filename ) ) );
+		$cs  = explode( '.', $filename );
+		$ext = strtolower( end( $cs ) );
 	}
 	if ( in_array( $ext, array( 'svg', 'svgz' ), true ) ) {
 		$data['type'] = 'image/svg+xml';
@@ -176,7 +177,7 @@ function _check_svg_secure( string $path ): bool {
 		}
 	}
 	$svg = @simplexml_load_string( $cont, 'SimpleXMLIterator' );  // phpcs:ignore
-	if ( $svg ) {
+	if ( $svg instanceof \SimpleXMLIterator ) {
 		return _check_svg_tree( $svg );
 	}
 	return false;
@@ -213,7 +214,8 @@ function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
 			}
 		}
 		if ( $sxi->hasChildren() ) {
-			if ( ! _check_svg_tree( $sxi->current() ) ) {
+			$e = $sxi->current();
+			if ( ! $e || ! _check_svg_tree( $e ) ) {
 				return false;
 			}
 		}
@@ -253,7 +255,7 @@ function _get_svg_size( string $path ): array {
 	if ( 0 === mb_strpos( $cont, "\x1f\x8b\x08" ) ) {
 		$cont = gzdecode( $cont );
 		if ( false === $cont ) {
-			return false;
+			return array();
 		}
 	}
 	$svg = @simplexml_load_string( $cont );  // phpcs:ignore
@@ -271,7 +273,7 @@ function _get_svg_size( string $path ): array {
 				$h = floatval( $ss[3] );
 			}
 		} else {
-			return false;
+			return array();
 		}
 	}
 	return array(
