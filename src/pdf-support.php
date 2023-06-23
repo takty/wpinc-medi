@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-03-04
+ * @version 2023-06-23
  */
 
 namespace wpinc\medi;
@@ -14,7 +14,7 @@ require_once __DIR__ . '/assets/asset-url.php';
 /**
  * Enables PDFs as post thumbnails.
  *
- * @param string $url_to (Optional) URL to the script.
+ * @param string|null $url_to (Optional) URL to the script.
  */
 function enable_pdf_post_thumbnail( ?string $url_to = null ): void {
 	if ( ! is_admin() ) {
