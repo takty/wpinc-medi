@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-10-06
+ * @version 2023-08-30
  */
 
 namespace wpinc\medi;
@@ -12,7 +12,7 @@ namespace wpinc\medi;
 /**
  * Updates Image Size Options.
  */
-function update_image_size_options() {
+function update_image_size_options(): void {
 	update_option( 'thumbnail_size_w', 160 );
 	update_option( 'thumbnail_size_h', 160 );
 	update_option( 'thumbnail_crop', 1 );
@@ -27,7 +27,7 @@ function update_image_size_options() {
 /**
  * Adds Custom Image Sizes.
  */
-function add_custom_image_sizes() {
+function add_custom_image_sizes(): void {
 	remove_image_size( '1536x1536' );
 	remove_image_size( '2048x2048' );
 	add_image_size( 'small', 160, 9999 );

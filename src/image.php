@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2022-07-01
+ * @version 2023-09-01
  */
 
 namespace wpinc\medi;
@@ -12,9 +12,9 @@ namespace wpinc\medi;
 /**
  * Displays an HTML img element of post thumbnail image.
  *
- * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
- * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
- * @param string              $meta_key (Optional) Meta key.
+ * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]      $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string            $meta_key (Optional) Meta key.
  */
 function the_thumbnail_image( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): void {
 	echo get_the_thumbnail_image( $post, $size, $meta_key );  // phpcs:ignore
@@ -23,9 +23,9 @@ function the_thumbnail_image( $post = null, $size = 'large', string $meta_key = 
 /**
  * Displays an HTML figure element of post thumbnail image.
  *
- * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
- * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
- * @param string              $meta_key (Optional) Meta key.
+ * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]      $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string            $meta_key (Optional) Meta key.
  */
 function the_thumbnail_figure( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): void {
 	echo get_the_thumbnail_figure( $post, $size, $meta_key );  // phpcs:ignore
@@ -34,9 +34,9 @@ function the_thumbnail_figure( $post = null, $size = 'large', string $meta_key =
 /**
  * Gets an HTML img element of post thumbnail image.
  *
- * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
- * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
- * @param string              $meta_key (Optional) Meta key.
+ * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]      $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string            $meta_key (Optional) Meta key.
  * @return string HTML img element or empty string on failure.
  */
 function get_the_thumbnail_image( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
@@ -50,9 +50,9 @@ function get_the_thumbnail_image( $post = null, $size = 'large', string $meta_ke
 /**
  * Gets an HTML figure element of post thumbnail image.
  *
- * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
- * @param string|int[]        $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
- * @param string              $meta_key (Optional) Meta key.
+ * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string|int[]      $size     (Optional) Image size. Accepts any registered image size name, or an array of width and height values in pixels (in that order). Default 'large'.
+ * @param string            $meta_key (Optional) Meta key.
  * @return string HTML figure element or empty string on failure.
  */
 function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
@@ -74,8 +74,8 @@ function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_k
 /**
  * Retrieves thumbnail image ID
  *
- * @param \WP_Post|array|null $post     (Optional) Post ID or post object. Default global $post.
- * @param string              $meta_key (Optional) Post meta key.
+ * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
+ * @param string            $meta_key (Optional) Post meta key.
  * @return int|null Attachment ID if the thumbnail is found, or null.
  */
 function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?int {
@@ -90,7 +90,7 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?
 /**
  * Retrieves attachment ID of the first image src from post contents.
  *
- * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
+ * @param int|\WP_Post|null $post (Optional) Post ID or post object. Default global $post.
  * @return int|null Attachment ID if the image is found, or null.
  */
 function get_first_image_id( $post = null ): ?int {
@@ -116,7 +116,7 @@ function url_to_attachment_id( string $url ): ?int {
 	if ( $id ) {
 		return $id;
 	}
-	$full_url = preg_replace( '/(-\d+x\d+)(\.[^.]+){0,1}$/i', '${2}', $url );
+	$full_url = preg_replace( '/(-\d+x\d+)(\.[^.]+){0,1}$/i', '${2}', $url ) ?? $url;
 	if ( $url === $full_url ) {
 		return null;
 	}
@@ -128,7 +128,7 @@ function url_to_attachment_id( string $url ): ?int {
  *
  * @access private
  *
- * @param \WP_Post|array|null $post (Optional) Post ID or post object. Default global $post.
+ * @param int|\WP_Post|null $post (Optional) Post ID or post object. Default global $post.
  * @return string URL if the first image is found, or '';
  */
 function _scrape_first_image_src( $post = null ): string {

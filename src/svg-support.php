@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-09-01
  */
 
 namespace wpinc\medi;
@@ -27,8 +27,8 @@ function enable_svg_support(): void {
 /**
  * Callback function for 'upload_mimes' filter.
  *
- * @param array $mimes Mime types keyed by the file extension.
- * @return array Mimes.
+ * @param array<string, string> $mimes Mime types keyed by the file extension.
+ * @return array<string, string> Mimes.
  */
 function _cb_upload_mimes__svg( array $mimes ): array {
 	$mimes['svg']  = 'image/svg+xml';
@@ -39,10 +39,10 @@ function _cb_upload_mimes__svg( array $mimes ): array {
 /**
  * Callback function for 'wp_check_filetype_and_ext' filter.
  *
- * @param array  $data     Values for the extension, mime type, and corrected filename.
- * @param string $file     Full path to the file.
- * @param string $filename The name of the file.
- * @return array Data.
+ * @param array<string, string|false> $data     Values for the extension, mime type, and corrected filename.
+ * @param string                      $file     Full path to the file.
+ * @param string                      $filename The name of the file.
+ * @return array<string, string|false> Data.
  */
 function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $filename ): array {
 	$ext = $data['ext'] ?? '';
@@ -60,8 +60,8 @@ function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $
 /**
  * Callback function for 'wp_handle_upload_prefilter' filter.
  *
- * @param array $file An array of data for a single file.
- * @return array File data.
+ * @param array<string, mixed> $file An array of data for a single file.
+ * @return array<string, mixed> File data.
  */
 function _cb_wp_handle_upload_prefilter__svg( array $file ): array {
 	if ( 'image/svg+xml' === $file['type'] ) {
@@ -76,16 +76,21 @@ function _cb_wp_handle_upload_prefilter__svg( array $file ): array {
  * Callback function for 'wp_prepare_attachment_for_js' filter.
  * For showing size selector on image dialog.
  *
- * @param array    $res        Array of prepared attachment data.
- * @param \WP_Post $attachment Attachment object.
- * @return array Filtered data.
+ * @param array<string, mixed> $res        Array of prepared attachment data.
+ * @param \WP_Post             $attachment Attachment object.
+ * @return array<string, mixed> Filtered data.
  */
 function _cb_wp_prepare_attachment_for_js__svg( array $res, \WP_Post $attachment ): array {
 	if ( 'image/svg+xml' === $res['mime'] ) {
-		$ds = _get_svg_size( get_attached_file( $attachment->ID ) );
-		if ( ! empty( $ds ) ) {
-			$res = array_merge( $res, $ds );
+		$file = get_attached_file( $attachment->ID );
+		if ( false === $file ) {
+			return $res;
 		}
+		$ds = _get_svg_size( $file );
+		if ( ! $ds ) {
+			return $res;
+		}
+		$res   = array_merge( $res, $ds );
 		$sizes = _get_possible_sizes( $ds );
 		foreach ( $sizes as $name => &$a ) {
 			$a['url']         = $res['url'];
@@ -101,17 +106,19 @@ function _cb_wp_prepare_attachment_for_js__svg( array $res, \WP_Post $attachment
  * Callback function for 'wp_generate_attachment_metadata' filter.
  * For generating metadata of SVG images.
  *
- * @param array $metadata      An array of attachment meta data.
- * @param int   $attachment_id Current attachment ID.
- * @return array Filtered metadata.
+ * @param array<string, mixed> $metadata      An array of attachment meta data.
+ * @param int                  $attachment_id Current attachment ID.
+ * @return array<string, mixed> Filtered metadata.
  */
 function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachment_id ): array {
 	if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
 		$file = get_attached_file( $attachment_id );
-
+		if ( false === $file ) {
+			return $metadata;
+		}
 		$ds = _get_svg_size( $file );
-		if ( empty( $ds ) ) {
-			return array();
+		if ( ! $ds ) {
+			return $metadata;
 		}
 
 		$rel_file = $file;
@@ -143,11 +150,11 @@ function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachm
  * Callback function for 'wp_calculate_image_srcset_meta' filter.
  * For removing srcset attributes of SVG images.
  *
- * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
- * @param int[]  $size_array    An array of requested width and height values.
- * @param string $image_src     The 'src' of the image.
- * @param int    $attachment_id The image attachment ID or 0 if not supplied.
- * @return array Filtered metadata.
+ * @param array<string, mixed> $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
+ * @param int[]                $size_array    An array of requested width and height values.
+ * @param string               $image_src     The 'src' of the image.
+ * @param int                  $attachment_id The image attachment ID or 0 if not supplied.
+ * @return array<string, mixed> Filtered metadata.
  */
 function _cb_wp_calculate_image_srcset_meta__svg( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
 	if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
@@ -170,6 +177,9 @@ function _cb_wp_calculate_image_srcset_meta__svg( array $image_meta, array $size
  */
 function _check_svg_secure( string $path ): bool {
 	$cont = file_get_contents( $path );  // phpcs:ignore
+	if ( false === $cont ) {
+		return false;
+	}
 	if ( 0 === mb_strpos( $cont, "\x1f\x8b\x08" ) ) {
 		$cont = gzdecode( $cont );
 		if ( false === $cont ) {
@@ -202,6 +212,9 @@ function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
 		$ats = $sxi->current()->attributes();
 		if ( $ats ) {
 			foreach ( $ats as $k => $v ) {
+				if ( ! is_string( $k ) ) {
+					continue;
+				}
 				$k = strtolower( $k );
 				foreach ( $ng_attr_start as $start ) {
 					if ( 0 === strpos( $k, $start ) ) {
@@ -232,14 +245,14 @@ function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
  * @return bool True if it contains a remote URL.
  */
 function _has_remote_url( string $v ): bool {
-	$v = trim( preg_replace( '/[^ -~]/xu', '', $v ) );
+	$v = trim( preg_replace( '/[^ -~]/xu', '', $v ) ?? $v );
 
 	$has_url = preg_match( '~^url\(\s*[\'"]\s*(.*)\s*[\'"]\s*\)$~xi', $v, $match );
 	if ( ! $has_url ) {
 		return false;
 	}
 	$v = trim( $match[1], '\'"' );
-	return preg_match( '~^((https?|ftp|file):)?//~xi', $v );
+	return (bool) preg_match( '~^((https?|ftp|file):)?//~xi', $v );
 }
 
 /**
@@ -248,14 +261,17 @@ function _has_remote_url( string $v ): bool {
  * @access private
  *
  * @param string $path File path.
- * @return array Array of dimension.
+ * @return array<string, mixed>|null Array of dimension.
  */
-function _get_svg_size( string $path ): array {
+function _get_svg_size( string $path ): ?array {
 	$cont = file_get_contents( $path );  // phpcs:ignore
+	if ( false === $cont ) {
+		return null;
+	}
 	if ( 0 === mb_strpos( $cont, "\x1f\x8b\x08" ) ) {
 		$cont = gzdecode( $cont );
 		if ( false === $cont ) {
-			return array();
+			return null;
 		}
 	}
 	$svg = @simplexml_load_string( $cont );  // phpcs:ignore
@@ -263,17 +279,17 @@ function _get_svg_size( string $path ): array {
 	$h   = 0;
 	if ( $svg ) {
 		$ats = $svg->attributes();
-		if ( isset( $ats->width, $ats->height ) && is_numeric( $ats->width ) && is_numeric( $ats->height ) ) {
-			$w = floatval( $ats->width );
-			$h = floatval( $ats->height );
+		if ( isset( $ats->width, $ats->height ) && is_numeric( (string) $ats->width ) && is_numeric( (string) $ats->height ) ) {
+			$w = (float) $ats->width;
+			$h = (float) $ats->height;
 		} elseif ( isset( $ats->viewBox ) ) {  // phpcs:ignore
 			$ss = explode( ' ', $ats->viewBox );  // phpcs:ignore
 			if ( isset( $ss[2], $ss[3] ) ) {
-				$w = floatval( $ss[2] );
-				$h = floatval( $ss[3] );
+				$w = (float) $ss[2];
+				$h = (float) $ss[3];
 			}
 		} else {
-			return array();
+			return null;
 		}
 	}
 	return array(
@@ -288,8 +304,8 @@ function _get_svg_size( string $path ): array {
  *
  * @access private
  *
- * @param array $ds Dimension of image.
- * @return array Array of size name to sizes.
+ * @param array<string, mixed> $ds Dimension of image.
+ * @return array<string|int, array<string, int>> Array of size name to sizes.
  */
 function _get_possible_sizes( array $ds ): array {
 	$sizes = array();

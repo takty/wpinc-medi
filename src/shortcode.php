@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-09-01
  */
 
 namespace wpinc\medi;
@@ -12,7 +12,7 @@ namespace wpinc\medi;
 /**
  * Adds shortcode for YouTube movies.
  */
-function add_youtube_shortcode() {
+function add_youtube_shortcode(): void {
 	if ( ! is_admin() ) {
 		add_shortcode( 'youtube', '\wpinc\medi\_sc_youtube' );
 	}
@@ -21,7 +21,7 @@ function add_youtube_shortcode() {
 /**
  * Adds shortcode for Vimeo movies.
  */
-function add_vimeo_shortcode() {
+function add_vimeo_shortcode(): void {
 	if ( ! is_admin() ) {
 		add_shortcode( 'vimeo', '\wpinc\medi\_sc_vimeo' );
 	}
@@ -30,7 +30,7 @@ function add_vimeo_shortcode() {
 /**
  * Adds shortcode for Instagram.
  */
-function add_instagram_shortcode() {
+function add_instagram_shortcode(): void {
 	if ( ! is_admin() ) {
 		add_shortcode( 'instagram', '\wpinc\medi\_sc_instagram' );
 		add_action( 'wp_enqueue_scripts', '\wpinc\medi\_cb_wp_enqueue_scripts__instagram_shortcode' );
@@ -40,7 +40,7 @@ function add_instagram_shortcode() {
 /**
  * Adds shortcode for Google calendars.
  */
-function add_google_calendar_shortcode() {
+function add_google_calendar_shortcode(): void {
 	if ( ! is_admin() ) {
 		add_shortcode( 'google_calendar', '\wpinc\medi\_sc_google_calendar' );
 		add_shortcode( 'gcal', '\wpinc\medi\_sc_google_calendar' );
@@ -56,10 +56,10 @@ function add_google_calendar_shortcode() {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_youtube( array $atts ): string {
+function _sc_youtube( $atts ): string {
 	return _make_video_frame(
 		$atts,
 		'<iframe class="wpinc-medi-youtube" src="https://www.youtube.com/embed/%s" width="%s" height="%s" frameborder="0" allow="autoplay;encrypted-media;fullscreen;picture-in-picture"></iframe>'
@@ -71,10 +71,10 @@ function _sc_youtube( array $atts ): string {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_vimeo( array $atts ): string {
+function _sc_vimeo( $atts ): string {
 	return _make_video_frame(
 		$atts,
 		'<iframe class="wpinc-medi-vimeo" src="https://player.vimeo.com/video/%s" width="%s" height="%s" frameborder="0" allow="autoplay;fullscreen"></iframe>'
@@ -86,18 +86,18 @@ function _sc_vimeo( array $atts ): string {
  *
  * @access private
  *
- * @param array  $atts Attributes.
- * @param string $tag  Iframe tag.
+ * @param array<string, string>|string $atts Attributes.
+ * @param string                       $tag  Iframe tag.
  * @return string Video frame markup.
  */
-function _make_video_frame( array $atts, string $tag ): string {
+function _make_video_frame( $atts, string $tag ): string {
 	$atts = shortcode_atts(
 		array(
 			'id'     => '',
 			'width'  => '',
 			'aspect' => '16:9',
 		),
-		$atts
+		(array) $atts
 	);
 	if ( empty( $atts['id'] ) ) {
 		return '';
@@ -108,11 +108,11 @@ function _make_video_frame( array $atts, string $tag ): string {
 	if ( ! empty( $atts['width'] ) ) {
 		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
 	}
-	printf( "\t$tag\n", esc_attr( $id ), esc_attr( $w ), esc_attr( $h ) );  // phpcs:ignore
+	printf( "\t$tag\n", esc_attr( $atts['id'] ), esc_attr( (string) $w ), esc_attr( (string) $h ) );  // phpcs:ignore
 	if ( ! empty( $atts['width'] ) ) {
 		echo "</div>\n";
 	}
-	return ob_get_clean();
+	return (string) ob_get_clean();
 }
 
 /**
@@ -122,7 +122,7 @@ function _make_video_frame( array $atts, string $tag ): string {
  *
  * @param string $aspect Aspect ration attribute.
  * @param int    $base   Base width.
- * @return array Array of width and height.
+ * @return int[] Array of width and height.
  */
 function _extract_aspect_size( string $aspect, int $base = 1920 ): array {
 	$as = array( 16, 9 );
@@ -131,7 +131,7 @@ function _extract_aspect_size( string $aspect, int $base = 1920 ): array {
 		if ( count( $ts ) === 2 ) {
 			$w = (float) $ts[0];
 			$h = (float) $ts[1];
-			if ( 0 !== $w && 0 !== $h ) {
+			if ( 0.0 !== $w && 0.0 !== $h ) {
 				$as = array( $w, $h );
 			}
 		}
@@ -148,16 +148,16 @@ function _extract_aspect_size( string $aspect, int $base = 1920 ): array {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_instagram( array $atts ): string {
+function _sc_instagram( $atts ): string {
 	$atts = shortcode_atts(
 		array(
 			'url'   => '',
 			'width' => '',
 		),
-		$atts
+		(array) $atts
 	);
 	ob_start();
 	if ( ! empty( $atts['width'] ) ) {
@@ -165,12 +165,12 @@ function _sc_instagram( array $atts ): string {
 		echo "\t<style>iframe.instagram-media{min-width:initial!important;}</style>\n";
 	}
 	echo "\t" . '<blockquote class="instagram-media" data-instgrm-version="12" style="max-width:99.5%;min-width:300px;width:calc(100% - 2px);display:none;">' . "\n";
-	echo "\t\t" . '<a href="' . esc_url( $url ) . '"></a>' . "\n";
+	echo "\t\t" . '<a href="' . esc_url( $atts['url'] ) . '"></a>' . "\n";
 	echo "\t" . '</blockquote>' . "\n";
 	if ( ! empty( $atts['width'] ) ) {
 		echo "</div>\n";
 	}
-	return ob_get_clean();
+	return (string) ob_get_clean();
 }
 
 /**
@@ -178,10 +178,10 @@ function _sc_instagram( array $atts ): string {
  *
  * @access private
  */
-function _cb_wp_enqueue_scripts__instagram_shortcode() {
+function _cb_wp_enqueue_scripts__instagram_shortcode(): void {
 	global $post;
 	if ( $post && has_shortcode( $post->post_content, 'instagram' ) ) {
-		wp_enqueue_script( 'instagram', '//platform.instagram.com/en_US/embeds.js', array(), 1.0, true );
+		wp_enqueue_script( 'instagram', '//platform.instagram.com/en_US/embeds.js', array(), '1.0', true );
 	}
 }
 
@@ -194,13 +194,13 @@ function _cb_wp_enqueue_scripts__instagram_shortcode() {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_google_calendar( array $atts ): string {
+function _sc_google_calendar( $atts ): string {
 	static $count = 0;
 
-	$atts = array_change_key_case( $atts );
+	$atts = array_change_key_case( (array) $atts );
 
 	$mk = array(
 		'wkst'   => 'weekstart',
@@ -260,7 +260,7 @@ function _sc_google_calendar( array $atts ): string {
 		'showTitle'     => $atts['showtitle'],
 		'showCalendars' => $atts['showcalendars'],
 	);
-	$tag = sprintf( $frm, $count, esc_url( $url . http_build_query( $qps ) ), esc_attr( $w ), esc_attr( $h ) );
+	$tag = sprintf( $frm, $count, esc_url( $url . http_build_query( $qps ) ), esc_attr( (string) $w ), esc_attr( (string) $h ) );
 
 	if ( $is_responsive ) {
 		$qps['mode']          = 'AGENDA';
@@ -268,11 +268,11 @@ function _sc_google_calendar( array $atts ): string {
 		$qps['showPrint']     = '0';
 		$qps['showCalendars'] = '0';
 
-		$tag_m = sprintf( $frm, "m-$count", esc_url( $url . http_build_query( $qps ) ), esc_attr( $w ), esc_attr( $h ) );
+		$tag_m = sprintf( $frm, "m-$count", esc_url( $url . http_build_query( $qps ) ), esc_attr( (string) $w ), esc_attr( (string) $h ) );
 
 		$sty = array(
 			"#wpinc-medi-gcal-m-$count { display: none; }",
-			'@media screen and (max-width: ' . intval( $atts['mobilewidth'] ) . 'px) {',
+			'@media screen and (max-width: ' . ( (int) $atts['mobilewidth'] ) . 'px) {',
 			"#wpinc-medi-gcal-$count { display: none; }",
 			"#wpinc-medi-gcal-m-$count { display: initial; }",
 			'}',
@@ -291,5 +291,5 @@ function _sc_google_calendar( array $atts ): string {
 	if ( $is_responsive && is_array( $sty ) ) {
 		echo '<style>' . esc_html( implode( ' ', $sty ) ) . '</style>';
 	}
-	return ob_get_clean();
+	return (string) ob_get_clean();
 }

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-08-30
  */
 
 namespace wpinc\medi;
@@ -36,8 +36,8 @@ function enable_pdf_post_thumbnail( ?string $url_to = null ): void {
  *
  * @access private
  *
- * @param array $query Query.
- * @return array Query.
+ * @param array<string, mixed> $query Query.
+ * @return array<string, mixed> Query.
  */
 function _cb_ajax_query_attachments_args( array $query ): array {
 	if ( 'image_pdf' === ( $query['post_mime_type'] ?? '' ) ) {
@@ -53,7 +53,7 @@ function _cb_ajax_query_attachments_args( array $query ): array {
  *
  * @param string $url_to URL to the script.
  */
-function _cb_admin_enqueue_scripts( string $url_to ) {
+function _cb_admin_enqueue_scripts( string $url_to ): void {
 	wp_enqueue_script( 'wpinc-medi-pdf-support', \wpinc\abs_url( $url_to, './assets/js/pdf-support.min.js' ), array(), '1.0', true );
 
 	$translations = array(
