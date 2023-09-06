@@ -4,21 +4,25 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-09-01
+ * @version 2023-09-06
  */
 
 namespace wpinc\medi;
 
 /**
  * Enables SVG file supports.
+ *
+ * @param string|null $capability Capability name.
  */
-function enable_svg_support(): void {
+function enable_svg_support( ?string $capability = 'manage_options' ): void {
 	if ( is_admin() ) {
-		add_filter( 'upload_mimes', '\wpinc\medi\_cb_upload_mimes__svg' );
-		add_filter( 'wp_check_filetype_and_ext', '\wpinc\medi\_cb_wp_check_filetype_and_ext__svg', 10, 3 );
-		add_filter( 'wp_handle_upload_prefilter', '\wpinc\medi\_cb_wp_handle_upload_prefilter__svg' );
-		add_filter( 'wp_prepare_attachment_for_js', '\wpinc\medi\_cb_wp_prepare_attachment_for_js__svg', 10, 2 );
-		add_filter( 'wp_generate_attachment_metadata', '\wpinc\medi\_cb_wp_generate_attachment_metadata__svg', 10, 2 );
+		if ( $capability && current_user_can( $capability ) ) {
+			add_filter( 'upload_mimes', '\wpinc\medi\_cb_upload_mimes__svg' );
+			add_filter( 'wp_check_filetype_and_ext', '\wpinc\medi\_cb_wp_check_filetype_and_ext__svg', 10, 3 );
+			add_filter( 'wp_handle_upload_prefilter', '\wpinc\medi\_cb_wp_handle_upload_prefilter__svg' );
+			add_filter( 'wp_prepare_attachment_for_js', '\wpinc\medi\_cb_wp_prepare_attachment_for_js__svg', 10, 2 );
+			add_filter( 'wp_generate_attachment_metadata', '\wpinc\medi\_cb_wp_generate_attachment_metadata__svg', 10, 2 );
+		}
 	} else {
 		add_filter( 'wp_calculate_image_srcset_meta', '\wpinc\medi\_cb_wp_calculate_image_srcset_meta__svg', 10, 4 );
 	}
