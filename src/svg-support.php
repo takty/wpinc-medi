@@ -12,7 +12,7 @@ namespace wpinc\medi;
 /**
  * Enables SVG file supports.
  *
- * @param string|null $capability Capability name.
+ * @param string|null $capability (Optional) Capability name.
  */
 function enable_svg_support( ?string $capability = 'manage_options' ): void {
 	if ( is_admin() ) {
