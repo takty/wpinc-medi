@@ -299,7 +299,7 @@ function _get_svg_size( string $path ): ?array {
 			$w = (float) $ats->width;
 			$h = (float) $ats->height;
 		} elseif ( isset( $ats->viewBox ) ) {  // phpcs:ignore
-			$ss = explode( ' ', $ats->viewBox );  // phpcs:ignore
+			$ss = explode( ' ', (string) $ats->viewBox );  // phpcs:ignore
 			if ( isset( $ss[2], $ss[3] ) ) {
 				$w = (float) $ss[2];
 				$h = (float) $ss[3];
