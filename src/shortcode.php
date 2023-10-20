@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-09-01
+ * @version 2023-10-20
  */
 
 namespace wpinc\medi;
@@ -262,6 +262,8 @@ function _sc_google_calendar( $atts ): string {
 	);
 	$tag = sprintf( $frm, $count, esc_url( $url . http_build_query( $qps ) ), esc_attr( (string) $w ), esc_attr( (string) $h ) );
 
+	$tag_m = null;
+	$sty   = null;
 	if ( $is_responsive ) {
 		$qps['mode']          = 'AGENDA';
 		$qps['showTz']        = '0';
@@ -285,10 +287,10 @@ function _sc_google_calendar( $atts ): string {
 		echo "$tag\n" . ( $is_responsive ? "$tag_m\n" : '' );  // phpcs:ignore
 	} else {
 		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
-		echo "\t$tag\n" . ( $is_responsive ? "\t$tag_m\n" : '' );  // phpcs:ignore
+		echo "\t$tag\n" . ( $tag_m ? "\t$tag_m\n" : '' );  // phpcs:ignore
 		echo "</div>\n";
 	}
-	if ( $is_responsive && is_array( $sty ) ) {
+	if ( is_array( $sty ) ) {
 		echo '<style>' . esc_html( implode( ' ', $sty ) ) . '</style>';
 	}
 	return (string) ob_get_clean();

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-09-06
+ * @version 2023-10-20
  */
 
 namespace wpinc\medi;
@@ -40,16 +40,25 @@ function _cb_upload_mimes__svg( array $mimes ): array {
 	return $mimes;
 }
 
-/**
+/** phpcs:ignore
  * Callback function for 'wp_check_filetype_and_ext' filter.
  *
- * @param array<string, string|false> $data     Values for the extension, mime type, and corrected filename.
- * @param string                      $file     Full path to the file.
- * @param string                      $filename The name of the file.
- * @return array<string, string|false> Data.
+ * phpcs:ignore
+ * @param array{
+ *     ext            : false|string,
+ *     proper_filename: false|string,
+ *     type           : false|string
+ * } $data Values for the extension, mime type, and corrected filename.
+ * @param string $_file    Full path to the file.
+ * @param string $filename The name of the file.
+ * @return array{
+ *     ext            : false|string,
+ *     proper_filename: false|string,
+ *     type           : false|string
+ * } Data.
  */
-function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $filename ): array {
-	$ext = $data['ext'] ?? '';
+function _cb_wp_check_filetype_and_ext__svg( array $data, string $_file, string $filename ): array {
+	$ext = is_string( $data['ext'] ) ? $data['ext'] : '';
 	if ( empty( $ext ) ) {
 		$cs  = explode( '.', $filename );
 		$ext = strtolower( end( $cs ) );
@@ -64,13 +73,13 @@ function _cb_wp_check_filetype_and_ext__svg( array $data, string $file, string $
 /**
  * Callback function for 'wp_handle_upload_prefilter' filter.
  *
- * @param array<string, mixed> $file An array of data for a single file.
- * @return array<string, mixed> File data.
+ * @param array{ error: int, name: string, size: int, tmp_name: string, type: string } $file An array of data for a single file.
+ * @return array{ error: int, name: string, size: int, tmp_name: string, type: string } File data.
  */
 function _cb_wp_handle_upload_prefilter__svg( array $file ): array {
 	if ( 'image/svg+xml' === $file['type'] ) {
 		if ( ! _check_svg_secure( $file['tmp_name'] ) ) {
-			$file['error'] = _x( 'Specified file was not be uploaded because it may contain security issues.', 'svg support', 'wpinc_medi' );
+			$file['error'] = UPLOAD_ERR_NO_FILE;
 		}
 	}
 	return $file;
@@ -96,7 +105,7 @@ function _cb_wp_prepare_attachment_for_js__svg( array $res, \WP_Post $attachment
 		}
 		$res   = array_merge( $res, $ds );
 		$sizes = _get_possible_sizes( $ds );
-		foreach ( $sizes as $name => &$a ) {
+		foreach ( $sizes as $_name => &$a ) {
 			$a['url']         = $res['url'];
 			$a['orientation'] = $a['height'] > $a['width'] ? 'portrait' : 'landscape';
 		}
@@ -140,7 +149,7 @@ function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachm
 		);
 
 		$sizes = _get_possible_sizes( $ds );
-		foreach ( $sizes as $name => &$a ) {
+		foreach ( $sizes as $_name => &$a ) {
 			$a['file']      = wp_basename( $file );
 			$a['mime-type'] = 'image/svg+xml';
 		}
@@ -155,12 +164,12 @@ function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachm
  * For removing srcset attributes of SVG images.
  *
  * @param array<string, mixed> $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
- * @param int[]                $size_array    An array of requested width and height values.
- * @param string               $image_src     The 'src' of the image.
+ * @param int[]                $_size_array   An array of requested width and height values.
+ * @param string               $_image_src    The 'src' of the image.
  * @param int                  $attachment_id The image attachment ID or 0 if not supplied.
  * @return array<string, mixed> Filtered metadata.
  */
-function _cb_wp_calculate_image_srcset_meta__svg( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
+function _cb_wp_calculate_image_srcset_meta__svg( array $image_meta, array $_size_array, string $_image_src, int $attachment_id ): array {
 	if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
 		unset( $image_meta['sizes'] );
 	}
@@ -213,7 +222,8 @@ function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
 		if ( in_array( $sxi->key(), $ng_tag, true ) ) {
 			return false;
 		}
-		$ats = $sxi->current()->attributes();
+		$cur = $sxi->current();
+		$ats = $cur ? $cur->attributes() : null;
 		if ( $ats ) {
 			foreach ( $ats as $k => $v ) {
 				if ( ! is_string( $k ) ) {
@@ -225,7 +235,7 @@ function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
 						return false;
 					}
 				}
-				if ( _has_remote_url( $v ) ) {
+				if ( null !== $v && _has_remote_url( (string) $v ) ) {
 					return false;
 				}
 			}
@@ -323,7 +333,7 @@ function _get_possible_sizes( array $ds ): array {
 			'full'      => __( 'Full Size' ),
 		)
 	);
-	foreach ( $names as $name => $label ) {
+	foreach ( $names as $name => $_label ) {
 		$def_w = 0;
 		$def_h = 0;
 		if ( $ds && 'full' === $name ) {
@@ -340,13 +350,15 @@ function _get_possible_sizes( array $ds ): array {
 			$ow = $ds['width'] ?? 1;
 			$oh = $ds['height'] ?? 1;
 			if ( 'full' !== $name ) {
-				if ( $w < $h ) {  // Portrait.
+				if ( $w < $h ) {
+					// Portrait.
 					if ( $ow / $oh < $w / $h ) {  // Original is vertically narrower.
 						$w = $ow * $h / $oh;
 					} else {
 						$h = $oh * $w / $ow;
 					}
-				} else {  // Landscape.
+				} else {  // phpcs:ignore
+					// Landscape.
 					if ( $w / $h < $ow / $oh ) {  // Original is horizontally narrower.
 						$h = $oh * $w / $ow;
 					} else {

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-09-01
+ * @version 2023-10-20
  */
 
 namespace wpinc\medi;
@@ -41,7 +41,7 @@ function the_thumbnail_figure( $post = null, $size = 'large', string $meta_key =
  */
 function get_the_thumbnail_image( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
 	$aid = get_thumbnail_id( $post, $meta_key );
-	if ( null === $aid ) {
+	if ( 0 === $aid ) {
 		return '';
 	}
 	return wp_get_attachment_image( $aid, $size );
@@ -57,13 +57,17 @@ function get_the_thumbnail_image( $post = null, $size = 'large', string $meta_ke
  */
 function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_key = '_thumbnail_id' ): string {
 	$aid = get_thumbnail_id( $post, $meta_key );
-	if ( null === $aid ) {
+	if ( 0 === $aid ) {
 		return '';
 	}
 	$img = wp_get_attachment_image( $aid, $size );
 
-	$p   = get_post( $aid );
-	$cap = $p ? "<figcaption class=\"wp-caption-text\">$p->post_excerpt</figcaption>" : '';
+	$p = get_post( $aid );
+	if ( $p instanceof \WP_Post ) {
+		$cap = "<figcaption class=\"wp-caption-text\">$p->post_excerpt</figcaption>";
+	} else {
+		$cap = '';
+	}
 	return "<figure class=\"wp-caption\">$img$cap</figure>";
 }
 
@@ -76,27 +80,27 @@ function get_the_thumbnail_figure( $post = null, $size = 'large', string $meta_k
  *
  * @param int|\WP_Post|null $post     (Optional) Post ID or post object. Default global $post.
  * @param string            $meta_key (Optional) Post meta key.
- * @return int|null Attachment ID if the thumbnail is found, or null.
+ * @return int Attachment ID if the thumbnail is found, or 0.
  */
-function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): ?int {
+function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): int {
 	$post = get_post( $post );
-	if ( ! $post ) {
-		return null;
+	if ( ! ( $post instanceof \WP_Post ) ) {
+		return 0;
 	}
 	$id = get_post_meta( $post->ID, $meta_key, true );
-	return empty( $id ) ? null : (int) $id;
+	return ( empty( $id ) || ! is_numeric( $id ) ) ? 0 : (int) $id;
 }
 
 /**
  * Retrieves attachment ID of the first image src from post contents.
  *
  * @param int|\WP_Post|null $post (Optional) Post ID or post object. Default global $post.
- * @return int|null Attachment ID if the image is found, or null.
+ * @return int Attachment ID if the image is found, or 0.
  */
-function get_first_image_id( $post = null ): ?int {
-	$src = _scrape_first_image_src();
+function get_first_image_id( $post = null ): int {
+	$src = _scrape_first_image_src( $post );
 	if ( empty( $src ) ) {
-		return null;
+		return 0;
 	}
 	return url_to_attachment_id( $src );
 }
@@ -105,12 +109,12 @@ function get_first_image_id( $post = null ): ?int {
  * Retrieves attachment ID from URL.
  *
  * @param string $url URL of an attachment.
- * @return int|null Attachment ID if the attachment is found, or null.
+ * @return int Attachment ID if the attachment is found, or 0.
  */
-function url_to_attachment_id( string $url ): ?int {
+function url_to_attachment_id( string $url ): int {
 	$dir = \wp_get_upload_dir();
 	if ( 0 !== strpos( $url, $dir['baseurl'] ) ) {
-		return null;
+		return 0;
 	}
 	$id = \attachment_url_to_postid( $url );
 	if ( $id ) {
@@ -118,7 +122,7 @@ function url_to_attachment_id( string $url ): ?int {
 	}
 	$full_url = preg_replace( '/(-\d+x\d+)(\.[^.]+){0,1}$/i', '${2}', $url ) ?? $url;
 	if ( $url === $full_url ) {
-		return null;
+		return 0;
 	}
 	return \attachment_url_to_postid( $full_url );
 }
@@ -133,7 +137,7 @@ function url_to_attachment_id( string $url ): ?int {
  */
 function _scrape_first_image_src( $post = null ): string {
 	$post = get_post( $post );
-	if ( ! $post ) {
+	if ( ! ( $post instanceof \WP_Post ) ) {
 		return '';
 	}
 	preg_match_all( '/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $post->post_content, $ms );
