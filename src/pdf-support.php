@@ -4,8 +4,10 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-08-30
+ * @version 2023-10-20
  */
+
+declare(strict_types=1);
 
 namespace wpinc\medi;
 
