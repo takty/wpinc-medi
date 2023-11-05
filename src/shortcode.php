@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-10-20
+ * @version 2023-11-04
  */
 
 declare(strict_types=1);
@@ -179,6 +179,7 @@ function _sc_instagram( $atts ): string {
  * Callback function for 'wp_enqueue_scripts' action.
  *
  * @access private
+ * @global \WP_Post|null $post
  */
 function _cb_wp_enqueue_scripts__instagram_shortcode(): void {
 	global $post;
