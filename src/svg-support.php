@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-10-20
+ * @version 2024-02-21
  */
 
 declare(strict_types=1);
@@ -201,8 +201,8 @@ function _check_svg_secure( string $path ): bool {
 			return false;
 		}
 	}
-	$svg = @simplexml_load_string( $cont, 'SimpleXMLIterator' );  // phpcs:ignore
-	if ( $svg instanceof \SimpleXMLIterator ) {
+	$svg = @simplexml_load_string( $cont );  // phpcs:ignore
+	if ( $svg instanceof \SimpleXMLElement ) {
 		return _check_svg_tree( $svg );
 	}
 	return false;
@@ -213,38 +213,36 @@ function _check_svg_secure( string $path ): bool {
  *
  * @access private
  *
- * @param \SimpleXMLIterator $sxi Iterator of XML nodes.
+ * @param \SimpleXMLElement $elm Iterator of XML nodes.
  * @return bool True if the current node is secure.
  */
-function _check_svg_tree( \SimpleXMLIterator $sxi ): bool {
+function _check_svg_tree( \SimpleXMLElement $elm ): bool {
 	$ng_tag        = array( 'script', 'use', 'a' );
 	$ng_attr_start = array( 'on', 'href', 'xlink:href' );
 
-	for ( $sxi->rewind(); $sxi->valid(); $sxi->next() ) {  // phpcs:ignore
-		if ( in_array( $sxi->key(), $ng_tag, true ) ) {
-			return false;
-		}
-		$cur = $sxi->current();
-		$ats = $cur ? $cur->attributes() : null;
-		if ( $ats ) {
-			foreach ( $ats as $k => $v ) {
-				if ( ! is_string( $k ) ) {
-					continue;
-				}
-				$k = strtolower( $k );
-				foreach ( $ng_attr_start as $start ) {
-					if ( 0 === strpos( $k, $start ) ) {
-						return false;
-					}
-				}
-				if ( null !== $v && _has_remote_url( (string) $v ) ) {
+	if ( in_array( $elm->getName(), $ng_tag, true ) ) {
+		return false;
+	}
+	$ats = $elm->attributes();
+	if ( $ats ) {
+		foreach ( $ats as $k => $v ) {
+			if ( ! is_string( $k ) ) {
+				continue;
+			}
+			$k = strtolower( $k );
+			foreach ( $ng_attr_start as $start ) {
+				if ( 0 === strpos( $k, $start ) ) {
 					return false;
 				}
 			}
+			if ( _has_remote_url( (string) $v ) ) {
+				return false;
+			}
 		}
-		if ( $sxi->hasChildren() ) {
-			$e = $sxi->current();
-			if ( ! $e || ! _check_svg_tree( $e ) ) {
+	}
+	if ( 0 < count( $elm->children() ) ) {
+		foreach ( $elm->children() as $c ) {
+			if ( ! _check_svg_tree( $c ) ) {
 				return false;
 			}
 		}
