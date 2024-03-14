@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2024-02-21
+ * @version 2024-03-13
  */
 
 declare(strict_types=1);
@@ -18,7 +18,7 @@ namespace wpinc\medi;
  */
 function enable_svg_support( ?string $capability = 'manage_options' ): void {
 	if ( is_admin() ) {
-		if ( $capability && current_user_can( $capability ) ) {
+		if ( is_string( $capability ) && current_user_can( $capability ) ) {
 			add_filter( 'upload_mimes', '\wpinc\medi\_cb_upload_mimes__svg' );
 			add_filter( 'wp_check_filetype_and_ext', '\wpinc\medi\_cb_wp_check_filetype_and_ext__svg', 10, 3 );
 			add_filter( 'wp_handle_upload_prefilter', '\wpinc\medi\_cb_wp_handle_upload_prefilter__svg' );
@@ -61,7 +61,7 @@ function _cb_upload_mimes__svg( array $mimes ): array {
  */
 function _cb_wp_check_filetype_and_ext__svg( array $data, string $_file, string $filename ): array {
 	$ext = is_string( $data['ext'] ) ? $data['ext'] : '';
-	if ( empty( $ext ) ) {
+	if ( '' === $ext ) {
 		$cs  = explode( '.', $filename );
 		$ext = strtolower( end( $cs ) );
 	}
@@ -102,17 +102,16 @@ function _cb_wp_prepare_attachment_for_js__svg( array $res, \WP_Post $attachment
 			return $res;
 		}
 		$ds = _get_svg_size( $file );
-		if ( ! $ds ) {
-			return $res;
+		if ( is_array( $ds ) ) {
+			$res   = array_merge( $res, $ds );
+			$sizes = _get_possible_sizes( $ds );
+			foreach ( $sizes as $_name => &$a ) {
+				$a['url']         = $res['url'];
+				$a['orientation'] = $a['height'] > $a['width'] ? 'portrait' : 'landscape';
+			}
+			$res['sizes'] = $sizes;
+			$res['icon']  = $res['url'];
 		}
-		$res   = array_merge( $res, $ds );
-		$sizes = _get_possible_sizes( $ds );
-		foreach ( $sizes as $_name => &$a ) {
-			$a['url']         = $res['url'];
-			$a['orientation'] = $a['height'] > $a['width'] ? 'portrait' : 'landscape';
-		}
-		$res['sizes'] = $sizes;
-		$res['icon']  = $res['url'];
 	}
 	return $res;
 }
@@ -132,31 +131,29 @@ function _cb_wp_generate_attachment_metadata__svg( array $metadata, int $attachm
 			return $metadata;
 		}
 		$ds = _get_svg_size( $file );
-		if ( ! $ds ) {
-			return $metadata;
-		}
+		if ( is_array( $ds ) ) {
+			$rel_file = $file;
+			$uploads  = wp_get_upload_dir();
+			if ( 0 === strpos( $rel_file, $uploads['basedir'] ) ) {
+				$rel_file = str_replace( $uploads['basedir'], '', $rel_file );
+				$rel_file = ltrim( $rel_file, '/' );
+			}
+			// Default image meta.
+			$metadata = array(
+				'width'  => $ds['width'],
+				'height' => $ds['height'],
+				'file'   => $rel_file,
+				'sizes'  => array(),
+			);
 
-		$rel_file = $file;
-		$uploads  = wp_get_upload_dir();
-		if ( 0 === strpos( $rel_file, $uploads['basedir'] ) ) {
-			$rel_file = str_replace( $uploads['basedir'], '', $rel_file );
-			$rel_file = ltrim( $rel_file, '/' );
+			$sizes = _get_possible_sizes( $ds );
+			foreach ( $sizes as $_name => &$a ) {
+				$a['file']      = wp_basename( $file );
+				$a['mime-type'] = 'image/svg+xml';
+			}
+			$metadata['sizes']          = $sizes;
+			$metadata['original_image'] = wp_basename( $file );
 		}
-		// Default image meta.
-		$metadata = array(
-			'width'  => $ds['width'],
-			'height' => $ds['height'],
-			'file'   => $rel_file,
-			'sizes'  => array(),
-		);
-
-		$sizes = _get_possible_sizes( $ds );
-		foreach ( $sizes as $_name => &$a ) {
-			$a['file']      = wp_basename( $file );
-			$a['mime-type'] = 'image/svg+xml';
-		}
-		$metadata['sizes']          = $sizes;
-		$metadata['original_image'] = wp_basename( $file );
 	}
 	return $metadata;
 }
@@ -224,7 +221,7 @@ function _check_svg_tree( \SimpleXMLElement $elm ): bool {
 		return false;
 	}
 	$ats = $elm->attributes();
-	if ( $ats ) {
+	if ( $ats instanceof \SimpleXMLElement ) {
 		foreach ( $ats as $k => $v ) {
 			if ( ! is_string( $k ) ) {
 				continue;
@@ -240,8 +237,9 @@ function _check_svg_tree( \SimpleXMLElement $elm ): bool {
 			}
 		}
 	}
-	if ( 0 < count( $elm->children() ) ) {
-		foreach ( $elm->children() as $c ) {
+	$cs = $elm->children();
+	if ( $cs instanceof \SimpleXMLElement && 0 < count( $cs ) ) {
+		foreach ( $cs as $c ) {
 			if ( ! _check_svg_tree( $c ) ) {
 				return false;
 			}
@@ -291,7 +289,7 @@ function _get_svg_size( string $path ): ?array {
 	$svg = @simplexml_load_string( $cont );  // phpcs:ignore
 	$w   = 0;
 	$h   = 0;
-	if ( $svg ) {
+	if ( $svg instanceof \SimpleXMLElement ) {
 		$ats = $svg->attributes();
 		if ( isset( $ats->width, $ats->height ) && is_numeric( (string) $ats->width ) && is_numeric( (string) $ats->height ) ) {
 			$w = (float) $ats->width;

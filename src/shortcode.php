@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-11-04
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ function add_vimeo_shortcode(): void {
 function add_instagram_shortcode(): void {
 	if ( ! is_admin() ) {
 		add_shortcode( 'instagram', '\wpinc\medi\_sc_instagram' );
-		add_action( 'wp_enqueue_scripts', '\wpinc\medi\_cb_wp_enqueue_scripts__instagram_shortcode' );
+		add_action( 'wp_enqueue_scripts', '\wpinc\medi\_cb_wp_enqueue_scripts__instagram_shortcode', 10, 0 );
 	}
 }
 
@@ -101,18 +101,18 @@ function _make_video_frame( $atts, string $tag ): string {
 		),
 		(array) $atts
 	);
-	if ( empty( $atts['id'] ) ) {
+	if ( '' === $atts['id'] ) {
 		return '';
 	}
 	list( $w, $h ) = _extract_aspect_size( $atts['aspect'] );
 
 	ob_start();
-	if ( ! empty( $atts['width'] ) ) {
-		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
-	}
-	printf( "\t$tag\n", esc_attr( $atts['id'] ), esc_attr( (string) $w ), esc_attr( (string) $h ) );  // phpcs:ignore
-	if ( ! empty( $atts['width'] ) ) {
+	if ( is_string( $atts['width'] ) && '' !== $atts['width'] ) {  // Check for non-empty-string.
+		printf( "<div style=\"max-width:%spx\">\n", esc_attr( $atts['width'] ) );
+		printf( "\t$tag\n", esc_attr( $atts['id'] ), esc_attr( (string) $w ), esc_attr( (string) $h ) );  // phpcs:ignore
 		echo "</div>\n";
+	} else {
+		printf( "$tag\n", esc_attr( $atts['id'] ), esc_attr( (string) $w ), esc_attr( (string) $h ) );  // phpcs:ignore
 	}
 	return (string) ob_get_clean();
 }
@@ -128,7 +128,7 @@ function _make_video_frame( $atts, string $tag ): string {
  */
 function _extract_aspect_size( string $aspect, int $base = 1920 ): array {
 	$as = array( 16, 9 );
-	if ( ! empty( $aspect ) ) {
+	if ( '' !== $aspect ) {
 		$ts = explode( ':', $aspect );
 		if ( count( $ts ) === 2 ) {
 			$w = (float) $ts[0];
@@ -161,16 +161,21 @@ function _sc_instagram( $atts ): string {
 		),
 		(array) $atts
 	);
+
+	$is = 'max-width:99.5%;min-width:300px;width:calc(100% - 2px);display:none;';
+	$ls = array(
+		'<blockquote class="instagram-media" data-instgrm-version="12" style="%s">',
+		"\t<a href=\"%s\"></a>",
+		'</blockquote>',
+	);
 	ob_start();
-	if ( ! empty( $atts['width'] ) ) {
-		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
+	if ( is_string( $atts['width'] ) && '' !== $atts['width'] ) {  // Check for non-empty-string.
+		printf( "<div style=\"max-width:%spx\">\n", esc_attr( $atts['width'] ) );
 		echo "\t<style>iframe.instagram-media{min-width:initial!important;}</style>\n";
-	}
-	echo "\t" . '<blockquote class="instagram-media" data-instgrm-version="12" style="max-width:99.5%;min-width:300px;width:calc(100% - 2px);display:none;">' . "\n";
-	echo "\t\t" . '<a href="' . esc_url( $atts['url'] ) . '"></a>' . "\n";
-	echo "\t" . '</blockquote>' . "\n";
-	if ( ! empty( $atts['width'] ) ) {
+		printf( "\t" . implode( "\n\t", $ls ) . "\n", esc_attr( $is ), esc_url( $atts['url'] ) );  // phpcs:ignore
 		echo "</div>\n";
+	} else {
+		printf( implode( "\n", $ls ) . "\n", esc_attr( $is ), esc_url( $atts['url'] ) );  // phpcs:ignore
 	}
 	return (string) ob_get_clean();
 }
@@ -240,7 +245,7 @@ function _sc_google_calendar( $atts ): string {
 		),
 		$atts
 	);
-	if ( empty( $atts['id'] ) ) {
+	if ( '' === $atts['id'] ) {
 		return '';
 	}
 	list( $w, $h ) = _extract_aspect_size( $atts['aspect'] );
@@ -286,12 +291,12 @@ function _sc_google_calendar( $atts ): string {
 	++$count;
 
 	ob_start();
-	if ( empty( $atts['width'] ) ) {
-		echo "$tag\n" . ( $is_responsive ? "$tag_m\n" : '' );  // phpcs:ignore
-	} else {
+	if ( is_string( $atts['width'] ) && '' !== $atts['width'] ) {  // Check for non-empty-string.
 		echo '<div style="max-width:' . esc_attr( $atts['width'] ) . 'px">' . "\n";
-		echo "\t$tag\n" . ( $tag_m ? "\t$tag_m\n" : '' );  // phpcs:ignore
+		echo "\t$tag\n" . ( is_string( $tag_m ) ? "\t$tag_m\n" : '' );  // phpcs:ignore
 		echo "</div>\n";
+	} else {
+		echo "$tag\n" . ( $is_responsive ? "$tag_m\n" : '' );  // phpcs:ignore
 	}
 	if ( is_array( $sty ) ) {
 		echo '<style>' . esc_html( implode( ' ', $sty ) ) . '</style>';

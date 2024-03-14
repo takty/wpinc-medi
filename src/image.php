@@ -4,7 +4,7 @@
  *
  * @package Wpinc Medi
  * @author Takuto Yanagida
- * @version 2023-10-20
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -90,7 +90,7 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): i
 		return 0;
 	}
 	$id = get_post_meta( $post->ID, $meta_key, true );
-	return ( empty( $id ) || ! is_numeric( $id ) ) ? 0 : (int) $id;
+	return ( ! is_numeric( $id ) ) ? 0 : (int) $id;
 }
 
 /**
@@ -101,7 +101,7 @@ function get_thumbnail_id( $post = null, string $meta_key = '_thumbnail_id' ): i
  */
 function get_first_image_id( $post = null ): int {
 	$src = _scrape_first_image_src( $post );
-	if ( empty( $src ) ) {
+	if ( '' === $src ) {
 		return 0;
 	}
 	return url_to_attachment_id( $src );
@@ -143,9 +143,5 @@ function _scrape_first_image_src( $post = null ): string {
 		return '';
 	}
 	preg_match_all( '/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $post->post_content, $ms );
-	if ( empty( $ms[1][0] ) ) {
-		return '';
-	}
-	$src = $ms[1][0];
-	return $src;
+	return $ms[1][0] ?? '';
 }
